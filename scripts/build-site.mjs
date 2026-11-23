@@ -126,7 +126,7 @@ function footer() {
   const areas = AREAS.map(([k, n]) => `<a href="${areaPath(k, n)}">${esc(k)}</a>`).join("");
   return `<footer class="foot"><div class="in">
   <div style="flex:1 1 260px;display:flex;flex-direction:column;gap:8px"><strong style="font:800 18px var(--head)">Zack Ahmad</strong>
-  <span>Perunding Hartanah Berdaftar REN 36121<br>Legacy Real Property Sdn Bhd<br>No 38, Jalan Cemara 8, Taman Saujana Utama,<br>47000 Sungai Buloh, Selangor<br><a href="tel:+60196071970">+6019-607 1970</a></span></div>
+  <span>Perunding Hartanah Berdaftar REN 36121<br>Legacy Real Property Sdn Bhd<br>No 38, Jalan Cemara 8, Bandar Saujana Utama,<br>47000 Sungai Buloh, Selangor<br><a href="tel:+60196071970">+6019-607 1970</a></span></div>
   <div style="flex:2 1 380px;display:flex;flex-direction:column;gap:10px"><strong>Rumah dijual mengikut kawasan</strong><nav aria-label="Kawasan">${areas}</nav></div>
   </div><div class="legal">© ${new Date().getFullYear()} Zack Ahmad · Legacy Real Property Sdn Bhd · <a href="/">Laman utama</a> · <a href="/rumah-dijual/">Rumah dijual</a> · <a href="/terjual/">Rekod jualan</a></div></footer>`;
 }
