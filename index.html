@@ -34,7 +34,15 @@
       "email": "zakariaahmad@legacyrealty.my",
       "identifier": { "@type": "PropertyValue", "propertyID": "REN", "value": "36121" },
       "parentOrganization": { "@type": "Organization", "name": "Legacy Real Property Sdn Bhd" },
-      "address": { "@type": "PostalAddress", "streetAddress": "[ALAMAT PEJABAT]", "addressCountry": "MY" },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "20, Jalan Badminton 13/29, Tadisma Business Park",
+        "addressLocality": "Shah Alam",
+        "postalCode": "40100",
+        "addressRegion": "Selangor",
+        "addressCountry": "MY"
+      },
+      "hasMap": "https://maps.app.goo.gl/Bj6oibZt9Sg69pqF9",
       "areaServed": [
         { "@type": "Place", "name": "Lembah Klang" },
         { "@type": "Place", "name": "Kuala Lumpur" },
@@ -230,9 +238,12 @@ p{margin:0}
 /* contact */
 .contact{display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start}
 .contact address{font-style:normal;display:flex;flex-direction:column;gap:12px}
-.contact address a,.contact address div{display:flex;align-items:center;gap:12px;color:var(--navy)!important;text-decoration:none;min-height:44px;word-break:break-all}
-.map{border:2px dashed var(--input-line);border-radius:16px;aspect-ratio:16/7;display:flex;align-items:center;justify-content:center;color:var(--ink-muted);font-size:14px;overflow:hidden}
-.map iframe{width:100%;height:100%;border:0}
+.contact address>a,.contact address>div:not(.map-card){display:flex;align-items:center;gap:12px;color:var(--navy)!important;text-decoration:none;min-height:44px;word-break:break-all}
+.map-card{border:1px solid var(--cream-line);border-radius:16px;overflow:hidden;background:#fff}
+.map{aspect-ratio:16/9;background:var(--photo)}
+.map iframe{width:100%;height:100%;border:0;display:block}
+.map-actions{padding:16px;display:flex;flex-wrap:wrap;gap:10px}
+.map-actions .btn{min-height:44px;padding:11px 18px;font-size:15px;word-break:normal}
 .enquiry{flex:1.1 1 420px;background:#fff;border:1px solid var(--cream-line);border-radius:24px;padding:32px;display:flex;flex-direction:column;gap:18px}
 .enquiry fieldset{border:0;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px}
 .enquiry legend{padding-bottom:8px}
@@ -589,9 +600,16 @@ p{margin:0}
           zakariaahmad@legacyrealty.my</a>
         <div style="color:var(--ink-muted)!important">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A6420" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></svg>
-          [ALAMAT PEJABAT]</div>
-        <!-- Ganti dengan iframe Google Maps dari Google Business Profile -->
-        <div class="map">[PETA GOOGLE BUSINESS PROFILE]</div>
+          <span>20, Jalan Badminton 13/29, Tadisma Business Park,<br>40100 Shah Alam, Selangor</span></div>
+        <div class="map-card">
+          <div class="map">
+            <iframe src="https://www.google.com/maps?q=20%2C%20Jalan%20Badminton%2013%2F29%2C%20Tadisma%20Business%20Park%2C%2040100%20Shah%20Alam%2C%20Selangor&amp;z=16&amp;output=embed" title="Peta lokasi pejabat Zack Ahmad di Tadisma Business Park, Shah Alam" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+          </div>
+          <div class="map-actions">
+            <a class="btn btn-navy" href="https://maps.app.goo.gl/Bj6oibZt9Sg69pqF9" target="_blank" rel="noopener">Buka di Google Maps</a>
+            <a class="btn btn-outline" href="https://www.google.com/maps/dir/?api=1&amp;destination=20%2C%20Jalan%20Badminton%2013%2F29%2C%20Tadisma%20Business%20Park%2C%2040100%20Shah%20Alam%2C%20Selangor" target="_blank" rel="noopener">Dapatkan arah</a>
+          </div>
+        </div>
       </address>
     </div>
     <form class="enquiry" id="enquiry">
@@ -632,7 +650,7 @@ p{margin:0}
   <div class="wrap foot">
     <div class="stack" style="flex:1 1 280px;gap:12px">
       <strong style="font:800 18px var(--head)">Zack Ahmad</strong>
-      <span>Perunding Hartanah Berdaftar REN 36121<br>Legacy Real Property Sdn Bhd<br>[ALAMAT PEJABAT]<br><a href="tel:+60196071970">+6019-607 1970</a></span>
+      <span>Perunding Hartanah Berdaftar REN 36121<br>Legacy Real Property Sdn Bhd<br>20, Jalan Badminton 13/29, Tadisma Business Park,<br>40100 Shah Alam, Selangor<br><a href="tel:+60196071970">+6019-607 1970</a></span>
     </div>
     <nav aria-label="Pautan pantas" style="flex:1 1 180px">
       <strong>Pautan</strong>
