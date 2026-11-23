@@ -16,7 +16,7 @@ const SITE = "https://zackahmad.my";
 const SB_URL = "https://ukblmuvaymkoszpcsxie.supabase.co";
 const SB_KEY = "sb_publishable_cHiug_yiGs3kPzNvSrOyWg_UwbKMICU"; // kunci awam (dilindungi RLS)
 const WA = "60196071970";
-const EXCLUDE = new Set([".git", ".github", "scripts", "supabase", "_site", "node_modules", "README.md", "sitemap.xml"]);
+const EXCLUDE = new Set([".git", ".github", "scripts", "supabase", "data", "_site", "node_modules", "README.md", "sitemap.xml"]);
 
 // Kawasan tetap di laman utama (mesti sama dengan senarai AREAS dalam index.html)
 const AREAS = [
@@ -61,6 +61,8 @@ async function copyDir(src, dst) {
 }
 
 /* ---------------- data ---------------- */
+let REVIEWS = null;
+try { REVIEWS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "reviews.json"), "utf8")); } catch { /* tiada ulasan */ }
 async function loadListings() {
   if (process.env.LISTINGS_JSON) return JSON.parse(await fs.readFile(process.env.LISTINGS_JSON, "utf8"));
   const fields = "id,slug,status,jenis,taman,kawasan,negeri,harga,bilik,bilik_air,keluasan_kps,pegangan,penerangan,gambar,urutan,tarikh_terjual,created_at,updated_at";
@@ -268,6 +270,7 @@ ${l.penerangan ? `<section style="display:flex;flex-direction:column;gap:10px"><
 <div style="display:flex;align-items:center;gap:14px"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="72" height="72">
 <div style="display:flex;flex-direction:column"><strong style="font:800 20px var(--head)">Zack Ahmad</strong><span style="font-size:13px;color:var(--muted-2)">Perunding Hartanah Berdaftar · REN 36121</span></div></div>
 <p style="font-size:15px;color:var(--muted)">Hampir 10 tahun pengalaman · 300+ unit rumah terjual.</p>
+${REVIEWS ? `<a href="${REVIEWS.profile_url}" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:8px;color:var(--cream);text-decoration:none;font-size:14px"><b style="font:800 18px var(--head)">${REVIEWS.rating}</b><span style="color:var(--accent);letter-spacing:1px">★★★★★</span><span style="color:var(--muted-2)">${REVIEWS.count} ulasan Google</span></a>` : ""}
 <a class="btn btn-accent" href="${waLink(askText)}" target="_blank" rel="noopener">${sold ? "Cari rumah serupa" : "Tanya tentang rumah ini"}</a>
 <a class="btn btn-ghost" href="tel:+60196071970">Telefon +6019-607 1970</a>
 <small>${sold ? "Nak jual rumah anda di kawasan ini? WhatsApp Zack." : "Mesej WhatsApp sudah ada nama rumah dan ID listing."}</small>
