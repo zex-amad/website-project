@@ -142,6 +142,7 @@ function page({ title, desc, canonical, image, jsonld, body, noindex, script = "
 <link rel="canonical" href="${SITE}${canonical}">
 <meta name="robots" content="${noindex ? "noindex, follow" : "index, follow"}">
 <meta property="og:type" content="website">
+<meta property="og:site_name" content="Zack Ahmad – Perunding Hartanah">
 <meta property="og:locale" content="ms_MY">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
