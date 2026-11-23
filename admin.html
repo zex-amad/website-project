@@ -197,7 +197,8 @@ button{cursor:pointer}
 
       <div class="chk">
         <label><input type="checkbox" id="e-tg"> Hantar ke Telegram channel</label>
-        <small id="tg-note">Akan dihantar automatik selepas bot Telegram disambung.</small>
+        <small id="tg-note"></small>
+        <button type="button" class="btn btn-line" id="tg-resend" hidden style="align-self:flex-start;min-height:36px;padding:6px 14px;font-size:13px">Hantar semula ke Telegram</button>
         <label><input type="checkbox" id="e-crm"> Kongsi dengan WhatsApp CRM AI agent</label>
       </div>
 
@@ -362,7 +363,10 @@ button{cursor:pointer}
     }
     $('e-id').textContent = 'ID #' + l.id;
     document.querySelectorAll('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === editStatus)); });
-    $('tg-note').textContent = l.telegram_dihantar_pada ? 'Sudah dihantar ke Telegram.' : 'Akan dihantar automatik selepas bot Telegram disambung.';
+    $('tg-note').textContent = l.telegram_dihantar_pada
+      ? 'Sudah dihantar ke Telegram pada ' + new Date(l.telegram_dihantar_pada).toLocaleString('ms-MY') + '.'
+      : 'Dihantar automatik bila anda tekan Simpan & terbitkan (status Dijual).';
+    $('tg-resend').hidden = !(l.telegram_dihantar_pada && l.status === 'dijual');
     renderPhotos(l);
   }
   $('seg').addEventListener('click', function (e) {
@@ -396,9 +400,35 @@ button{cursor:pointer}
     if (r.error) { toast('Gagal simpan: ' + r.error.message, true); return; }
     Object.assign(l, r.data); editStatus = l.status;
     render();
-    toast(status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
-      'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.');
+    var msg = status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
+      'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.';
+    toast(msg);
+    if (l.status === 'dijual' && l.hantar_telegram && !l.telegram_dihantar_pada) {
+      await sendTelegram(l, false, msg);
+    }
   }
+
+  async function sendTelegram(l, force, prefix) {
+    toast((prefix ? prefix + ' ' : '') + 'Menghantar ke Telegram…');
+    var r = await db.functions.invoke('telegram-post', { body: { id: l.id, force: !!force } });
+    var out = r.data || {};
+    if (r.error || out.error) {
+      var why = out.error || (r.error && r.error.message) || 'ralat tidak diketahui';
+      if (r.error && r.error.context && typeof r.error.context.json === 'function') {
+        try { var j = await r.error.context.json(); if (j && j.error) why = j.error; } catch (e) {}
+      }
+      toast((prefix ? prefix + ' ' : '') + 'Telegram gagal: ' + why, true);
+      return;
+    }
+    if (out.skipped) { toast((prefix ? prefix + ' ' : '') + 'Telegram: ' + out.skipped); return; }
+    l.telegram_dihantar_pada = out.telegram_dihantar_pada; render();
+    toast((prefix ? prefix + ' ' : '') + 'Dihantar ke Telegram channel ✓');
+  }
+  $('tg-resend').addEventListener('click', function () {
+    var l = sel(); if (!l) return;
+    if (!window.confirm('Hantar semula listing ini ke Telegram channel?')) return;
+    sendTelegram(l, true, '');
+  });
   $('save').addEventListener('click', function () { save(editStatus === 'draf' ? 'dijual' : editStatus); });
   $('draft').addEventListener('click', function () { save('draf'); });
   $('del').addEventListener('click', async function () {
