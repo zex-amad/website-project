@@ -4,6 +4,7 @@
 // Secrets yang perlu ditetapkan di Supabase › Edge Functions › Secrets:
 //   TELEGRAM_BOT_TOKEN  – token dari @BotFather (JANGAN letak di laman atau GitHub)
 //   TELEGRAM_CHAT_ID    – @namachannel (channel awam) atau -100xxxxxxxxxx (channel peribadi)
+// Kunci rahsia Supabase TIDAK diperlukan: function guna sesi admin yang log masuk.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
 
@@ -99,17 +100,19 @@ Deno.serve(async (req) => {
   try {
     const url = Deno.env.get("SUPABASE_URL")!;
     const publicKey = key("SUPABASE_ANON_KEY", "SUPABASE_PUBLISHABLE_KEYS");
-    const secretKey = key("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_SECRET_KEYS");
     const token = Deno.env.get("TELEGRAM_BOT_TOKEN");
     const chat = Deno.env.get("TELEGRAM_CHAT_ID");
-    if (!publicKey || !secretKey) return json({ error: "Kunci Supabase tiada dalam Edge Function." }, 500);
+    if (!publicKey) return json({ error: "Kunci Supabase tiada dalam Edge Function." }, 500);
     if (!token || !chat) return json({ error: "TELEGRAM_BOT_TOKEN atau TELEGRAM_CHAT_ID belum ditetapkan di Secrets." }, 500);
 
-    // 1. Pastikan pemanggil ialah admin (log masuk di admin.html)
+    // 1. Pastikan pemanggil ialah admin (log masuk di admin.html).
+    //    Semua bacaan/tulisan guna sesi admin itu sendiri (dibenarkan oleh RLS),
+    //    jadi kunci rahsia Supabase tidak diperlukan.
     const authHeader = req.headers.get("Authorization") ?? "";
     const asUser = createClient(url, publicKey, { global: { headers: { Authorization: authHeader } } });
     const { data: isAdmin, error: adminErr } = await asUser.rpc("is_admin");
-    if (adminErr || !isAdmin) return json({ error: "Hanya admin boleh hantar ke Telegram." }, 403);
+    if (adminErr) return json({ error: "Semakan admin gagal: " + adminErr.message }, 403);
+    if (!isAdmin) return json({ error: "Hanya admin boleh hantar ke Telegram. Sila log masuk semula." }, 403);
 
     const body = await req.json();
 
@@ -134,9 +137,11 @@ Deno.serve(async (req) => {
 
     // 2. Ambil listing
     const { id, force } = body;
-    const db = createClient(url, secretKey);
-    const { data: l, error } = await db.from("listings").select("*").eq("id", id).single();
-    if (error || !l) return json({ error: "Listing tidak dijumpai." }, 404);
+    if (id === undefined || id === null) return json({ error: "ID listing tiada dalam permintaan." }, 400);
+    const db = asUser;
+    const { data: l, error } = await db.from("listings").select("*").eq("id", id).maybeSingle();
+    if (error) return json({ error: `Gagal baca listing #${id}: ${error.message}` }, 500);
+    if (!l) return json({ error: `Listing #${id} tidak dijumpai.` }, 404);
 
     if (l.status !== "dijual") return json({ skipped: "Hanya listing berstatus Dijual dihantar." });
     if (!l.hantar_telegram) return json({ skipped: "Pilihan 'Hantar ke Telegram' tidak ditanda." });
@@ -159,7 +164,8 @@ Deno.serve(async (req) => {
 
     // 4. Tandakan sudah dihantar
     const sentAt = new Date().toISOString();
-    await db.from("listings").update({ telegram_dihantar_pada: sentAt }).eq("id", id);
+    const { error: upErr } = await db.from("listings").update({ telegram_dihantar_pada: sentAt }).eq("id", id);
+    if (upErr) return json({ ok: true, telegram_dihantar_pada: sentAt, warning: "Dihantar, tetapi gagal tanda: " + upErr.message });
     const first = Array.isArray(res.result) ? res.result[0] : res.result;
     return json({ ok: true, telegram_dihantar_pada: sentAt, sent_to: chatInfo(first?.chat) });
   } catch (e) {
