@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin.html
 
 # AI assistants and search (explicitly allowed)
 User-agent: GPTBot

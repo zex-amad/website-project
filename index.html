@@ -170,6 +170,7 @@ p{margin:0}
 .listing .img{aspect-ratio:4/3;background:var(--photo);display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;color:var(--ink-muted);font-size:14px;position:relative}
 .tag{position:absolute;top:16px;left:16px;background:var(--navy);color:var(--cream);font-size:12px;font-weight:600;letter-spacing:.12em;padding:6px 12px;border-radius:999px}
 .tag.sold{background:var(--accent-ink);color:#fff}
+.listing .img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .listing .body{padding:24px;display:flex;flex-direction:column;gap:10px}
 .price{font:800 24px var(--head)}
 .listing h3{font-weight:700;font-size:18px;line-height:1.35}
@@ -706,30 +707,54 @@ p{margin:0}
   document.getElementById('foot-areas').innerHTML = foot;
   document.getElementById('senarai-kawasan').innerHTML = opts;
 
-  /* ---- Listings: replace with real data (or CMS feed) ---- */
-  var LISTINGS = [
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', price: '[HARGA]', beds: '[X]', baths: '[X]', sqft: '[X]', tenure: '[Pegangan bebas / pajakan]', url: '#senarai' },
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', price: '[HARGA]', beds: '[X]', baths: '[X]', sqft: '[X]', tenure: '[Pegangan bebas / pajakan]', url: '#senarai' },
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', price: '[HARGA]', beds: '[X]', baths: '[X]', sqft: '[X]', tenure: '[Pegangan bebas / pajakan]', url: '#senarai' }
-  ];
-  var SOLD = [
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', date: '[Bulan, Tahun]' },
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', date: '[Bulan, Tahun]' },
-    { type: '[Jenis rumah]', taman: '[Taman]', area: '[Kawasan]', date: '[Bulan, Tahun]' }
-  ];
-  document.getElementById('listings').innerHTML = LISTINGS.map(function (l) {
-    var title = l.type + ' di ' + l.taman + ', ' + l.area;
-    return '<article class="listing"><div class="img">[FOTO: ' + esc(title) + ']<span class="tag">DIJUAL</span></div>' +
-      '<div class="body"><span class="price">RM ' + esc(l.price) + '</span><h3>' + esc(title) + '</h3>' +
-      '<div class="specs"><span>' + esc(l.beds) + ' bilik</span><span>' + esc(l.baths) + ' bilik air</span><span>' + esc(l.sqft) + ' kps</span><span>' + esc(l.tenure) + '</span></div>' +
-      '<a href="' + l.url + '">Maklumat lanjut →</a></div></article>';
-  }).join('');
-  document.getElementById('sold').innerHTML = SOLD.map(function (s) {
-    var title = s.type + ' di ' + s.taman + ', ' + s.area;
-    return '<article class="listing"><div class="img">[FOTO RUMAH]<span class="tag sold">TERJUAL</span></div>' +
-      '<div class="body"><h3>' + esc(title) + '</h3><span class="note">Terjual ' + esc(s.date) + '</span>' +
-      '<a href="#senarai">Cari rumah serupa di ' + esc(s.area) + ' →</a></div></article>';
-  }).join('');
+  /* ---- Listings from Supabase (urus di /admin.html) ---- */
+  var SB_URL = 'https://ukblmuvaymkoszpcsxie.supabase.co';
+  var SB_KEY = 'sb_publishable_cHiug_yiGs3kPzNvSrOyWg_UwbKMICU';
+  var FIELDS = 'id,slug,status,jenis,taman,kawasan,negeri,harga,bilik,bilik_air,keluasan_kps,pegangan,gambar,tarikh_terjual';
+  function sbGet(query) {
+    return fetch(SB_URL + '/rest/v1/listings?select=' + FIELDS + '&' + query, { headers: { apikey: SB_KEY } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
+  }
+  function num(n) { return n === null || n === undefined || n === '' ? null : Number(n).toLocaleString('en-MY'); }
+  function photo(l, label, sold) {
+    var g = (l.gambar || [])[0];
+    return '<div class="img">' + (g ? '<img src="' + esc(g.url) + '" alt="' + esc(label) + '" loading="lazy">' : 'Gambar akan dikemas kini') +
+      '<span class="tag' + (sold ? ' sold' : '') + '">' + (sold ? 'TERJUAL' : 'DIJUAL') + '</span></div>';
+  }
+  var BULAN = ['Januari', 'Februari', 'Mac', 'April', 'Mei', 'Jun', 'Julai', 'Ogos', 'September', 'Oktober', 'November', 'Disember'];
+  function renderListings(rows) {
+    var box = document.getElementById('listings');
+    if (!rows.length) {
+      box.innerHTML = '<article class="listing"><div class="body"><h3>Senarai terkini sedang dikemas kini</h3>' +
+        '<p class="note">WhatsApp Zack untuk senarai rumah dijual ikut kawasan dan bajet anda.</p>' +
+        '<a href="https://wa.me/60196071970?text=' + encodeURIComponent('Salam Zack, boleh kongsi senarai rumah dijual terkini?') + '" target="_blank" rel="noopener">Minta senarai terkini →</a></div></article>';
+      return;
+    }
+    box.innerHTML = rows.map(function (l) {
+      var title = l.jenis + ' di ' + l.taman + ', ' + l.kawasan;
+      var specs = [l.bilik != null ? l.bilik + ' bilik' : '', l.bilik_air != null ? l.bilik_air + ' bilik air' : '',
+        l.keluasan_kps != null ? num(l.keluasan_kps) + ' kps' : '', l.pegangan || ''].filter(Boolean);
+      var wa = 'https://wa.me/60196071970?text=' + encodeURIComponent('Salam Zack, saya berminat dengan ' + title + ' (ID #' + l.id + ').');
+      return '<article class="listing" id="hartanah-' + l.id + '">' + photo(l, title, false) +
+        '<div class="body"><span class="price">' + (num(l.harga) ? 'RM ' + num(l.harga) : 'Harga: hubungi') + '</span><h3>' + esc(title) + '</h3>' +
+        '<div class="specs">' + specs.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' +
+        '<a href="' + wa + '" target="_blank" rel="noopener">Tanya Zack tentang rumah ini →</a></div></article>';
+    }).join('');
+  }
+  function renderSold(rows) {
+    var box = document.getElementById('sold');
+    if (!rows.length) { box.hidden = true; return; }
+    box.innerHTML = rows.map(function (l) {
+      var title = l.jenis + ' di ' + l.taman + ', ' + l.kawasan;
+      var d = l.tarikh_terjual ? new Date(l.tarikh_terjual) : null;
+      var when = d ? 'Terjual ' + BULAN[d.getMonth()] + ' ' + d.getFullYear() : 'Terjual';
+      return '<article class="listing">' + photo(l, title, true) +
+        '<div class="body"><h3>' + esc(title) + '</h3><span class="note">' + when + '</span>' +
+        '<a href="#carian-tajuk">Cari rumah serupa di ' + esc(l.kawasan) + ' →</a></div></article>';
+    }).join('');
+  }
+  sbGet('status=eq.dijual&order=urutan.asc,id.desc&limit=6').then(renderListings).catch(function () { renderListings([]); });
+  sbGet('status=eq.terjual&order=urutan.asc,tarikh_terjual.desc.nullslast&limit=6').then(renderSold).catch(function () { renderSold([]); });
 
   /* ---- Search → WhatsApp ---- */
   document.getElementById('search-form').addEventListener('submit', function (e) {

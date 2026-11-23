@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Admin Listing – Zack Ahmad</title>
+<meta name="theme-color" content="#13203A">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#13203A;--cream:#F6F3EC;--line:#E4DED0;--input:#CFC7B5;--photo:#E9E4D8;--ink-muted:#3B4A66;--brass:#8A6420;--accent:#D9B26A;--head:"Manrope",system-ui,sans-serif;--body:"Inter",system-ui,sans-serif}
+*{box-sizing:border-box}
+body{margin:0;background:var(--cream);color:var(--navy);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2{font-family:var(--head);margin:0}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:600;border-radius:999px;padding:11px 20px;min-height:44px;border:1px solid transparent;text-decoration:none}
+.btn-navy{background:var(--navy);color:var(--cream)}
+.btn-line{background:#fff;color:var(--navy);border-color:var(--input)}
+.btn-danger{background:#fff;color:#A3261B;border-color:#E7C3BF}
+.btn:disabled{opacity:.55;cursor:default}
+
+/* top bar */
+.top{background:var(--navy);color:var(--cream)}
+.top-in{max-width:1400px;margin:0 auto;padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;font:800 17px var(--head)}
+.top a{color:#D4DBE8;text-decoration:none}
+.top .who{color:#A9B6CF;font-size:14px}
+.top .btn{background:transparent;color:var(--cream);border-color:#33456A;min-height:40px;padding:8px 16px}
+
+/* login */
+.login{max-width:400px;margin:10vh auto;background:#fff;border:1px solid var(--line);border-radius:20px;padding:32px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;flex:1 1 140px}
+.field label{font-size:13px;font-weight:600;color:var(--ink-muted)}
+.field input,.field select,.field textarea{font-size:15px;padding:10px 12px;min-height:44px;border:1px solid var(--input);border-radius:10px;background:#fff;color:var(--navy);width:100%}
+.field textarea{min-height:90px;resize:vertical}
+.err{color:#A3261B;font-size:14px;margin:0}
+
+/* layout */
+.wrap{max-width:1400px;margin:0 auto;padding:20px;display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.list-col{flex:999 1 480px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.edit-col{flex:1 1 380px;max-width:480px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:16px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+.head-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+.sub{margin:4px 0 0;font-size:14px;color:var(--ink-muted)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font-size:14px;font-weight:600;background:#fff;color:var(--navy);border:1px solid var(--input);border-radius:999px;padding:8px 16px;min-height:40px}
+.tab[aria-selected="true"]{background:var(--navy);color:var(--cream);border-color:var(--navy)}
+
+/* rows */
+.rows{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.row{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 14px 10px 6px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;cursor:pointer}
+.row.sel{border-color:var(--navy);box-shadow:inset 4px 0 0 var(--navy)}
+.row.over::before{content:"";position:absolute;left:0;right:0;top:-7px;height:4px;border-radius:2px;background:var(--brass)}
+.row.dragging{opacity:.45}
+.grip{cursor:grab;color:#8A93A6;font-size:22px;line-height:1;padding:8px 4px;user-select:none;-webkit-user-select:none;touch-action:none}
+.thumb{width:88px;height:64px;border-radius:10px;background:var(--photo);overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--ink-muted)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.r-main{flex:1 1 200px;min-width:0}
+.r-title{font:700 16px var(--head);display:block}
+.r-meta{font-size:13px;color:var(--ink-muted)}
+.r-price{font:800 17px var(--head);min-width:110px}
+.pill{font-size:12px;font-weight:600;letter-spacing:.06em;padding:6px 10px;border-radius:999px}
+.p-dijual{background:#E3F1E8;color:#1F6B3A}
+.p-terjual{background:var(--brass);color:#fff}
+.p-draf{background:#ECEEF2;color:var(--ink-muted)}
+.move{display:flex;flex-direction:column;gap:2px}
+.move button{width:32px;height:28px;border:1px solid var(--input);background:#fff;border-radius:8px;font-size:12px;color:var(--navy);padding:0}
+.empty{padding:32px;text-align:center;border:2px dashed var(--input);border-radius:16px;color:var(--ink-muted)}
+
+/* editor */
+.seg{display:flex;background:var(--cream);border-radius:999px;padding:4px;gap:4px}
+.seg button{flex:1;font-size:14px;font-weight:600;background:transparent;color:var(--navy);border:0;border-radius:999px;padding:8px 10px;min-height:40px}
+.seg button[aria-pressed="true"]{background:var(--navy);color:var(--cream)}
+.drop{border:2px dashed var(--input);background:#fff;border-radius:14px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;cursor:pointer}
+.drop.active{border-color:var(--brass);background:#FBF4E6}
+.photos{display:flex;flex-wrap:wrap;gap:8px}
+.ph{position:relative;width:96px;height:72px;border-radius:10px;overflow:hidden;background:var(--photo)}
+.ph img{width:100%;height:100%;object-fit:cover}
+.ph .main{position:absolute;left:4px;top:4px;background:var(--navy);color:var(--cream);font-size:10px;font-weight:600;padding:2px 6px;border-radius:999px}
+.ph .x{position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:999px;border:0;background:rgba(19,32,58,.82);color:#fff;font-size:15px;line-height:1}
+.ph .star{position:absolute;left:3px;bottom:3px;border:0;background:rgba(255,255,255,.92);color:var(--navy);font-size:11px;font-weight:600;border-radius:999px;padding:3px 8px}
+.uploading{font-size:13px;color:var(--brass)}
+.grid{display:flex;flex-wrap:wrap;gap:12px}
+.full{flex-basis:100%}
+.chk{background:var(--cream);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.chk label{display:flex;align-items:center;gap:10px;min-height:32px;cursor:pointer}
+.chk input{width:18px;height:18px;accent-color:var(--navy)}
+.chk small{color:var(--ink-muted);padding-left:28px;margin-top:-6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.toast{margin:0;font-size:14px;padding:10px 14px;border-radius:10px;background:#E3F1E8;color:#1F6B3A}
+.toast.bad{background:#FBE9E7;color:#A3261B}
+.storage{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--ink-muted)}
+.bar{height:6px;background:var(--photo);border-radius:3px;margin-top:6px;overflow:hidden}
+.bar div{height:6px;background:var(--brass);width:0}
+@media (max-width:900px){.edit-col{position:static;max-height:none;max-width:none}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="brand">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D9B26A" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+      Admin Listing
+    </div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px">
+      <a href="/" target="_blank" rel="noopener">Lihat laman ↗</a>
+      <span class="who" id="who"></span>
+      <button class="btn" id="logout" hidden>Log keluar</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<form class="login" id="login" hidden>
+  <h1 style="font-size:24px">Log masuk admin</h1>
+  <div class="field"><label for="l-email">E-mel</label><input id="l-email" type="email" autocomplete="username" required></div>
+  <div class="field"><label for="l-pass">Kata laluan</label><input id="l-pass" type="password" autocomplete="current-password" required></div>
+  <p class="err" id="l-err" role="alert"></p>
+  <button class="btn btn-navy" type="submit" id="l-btn">Log masuk</button>
+</form>
+
+<!-- APP -->
+<div class="wrap" id="app" hidden>
+  <main class="list-col">
+    <div class="head-row">
+      <div>
+        <h1 style="font-size:26px">Listing hartanah</h1>
+        <p class="sub">Seret ⠿ (atau guna ▲▼) untuk susun urutan di laman. Klik listing untuk edit.</p>
+      </div>
+      <button class="btn btn-navy" id="add">＋ Tambah listing</button>
+    </div>
+    <div class="tabs" role="tablist" id="tabs"></div>
+    <ul class="rows" id="rows" aria-label="Senarai listing"></ul>
+    <p class="empty" id="empty" hidden>Tiada listing dalam kategori ini.</p>
+    <div class="storage" id="storage"></div>
+  </main>
+
+  <aside class="edit-col" id="editor" aria-label="Edit listing">
+    <p class="sub" id="no-sel">Pilih listing di sebelah kiri, atau tekan <strong>Tambah listing</strong>.</p>
+    <div id="form" hidden style="display:flex;flex-direction:column;gap:16px">
+      <div class="head-row" style="align-items:center">
+        <h2 style="font-size:20px">Edit listing</h2>
+        <span class="sub" id="e-id" style="margin:0"></span>
+      </div>
+
+      <div>
+        <div class="field" style="gap:8px"><label>Status</label></div>
+        <div class="seg" id="seg">
+          <button type="button" data-s="draf" aria-pressed="false">Draf</button>
+          <button type="button" data-s="dijual" aria-pressed="false">Dijual</button>
+          <button type="button" data-s="terjual" aria-pressed="false">Terjual</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:13px;font-weight:600;color:var(--ink-muted)">Gambar <span style="font-weight:400">(gambar pertama = gambar utama)</span></span>
+        <label class="drop" id="drop" for="file">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#8A6420" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-9 9"/></svg>
+          <strong>Seret &amp; lepas gambar di sini</strong>
+          <span class="sub" style="margin:0">atau klik untuk pilih · dimampatkan automatik</span>
+        </label>
+        <input id="file" type="file" accept="image/*" multiple style="position:absolute;width:1px;height:1px;opacity:0">
+        <span class="uploading" id="uploading" hidden></span>
+        <div class="photos" id="photos"></div>
+      </div>
+
+      <div class="grid">
+        <div class="field"><label for="e-jenis">Jenis</label>
+          <select id="e-jenis">
+            <option>Teres 1 Tingkat</option><option>Teres 2 Tingkat</option><option>Teres 3 Tingkat</option>
+            <option>Semi-D</option><option>Banglo</option><option>Townhouse</option>
+            <option>Pangsapuri</option><option>Kondominium</option><option>Tanah</option><option>Komersial</option>
+          </select></div>
+        <div class="field"><label for="e-harga">Harga (RM)</label><input id="e-harga" type="number" min="0" step="1000" inputmode="numeric"></div>
+        <div class="field full"><label for="e-taman">Taman / projek</label><input id="e-taman" type="text"></div>
+        <div class="field"><label for="e-kawasan">Kawasan</label><input id="e-kawasan" type="text" placeholder="cth. Sungai Buloh"></div>
+        <div class="field"><label for="e-negeri">Negeri</label>
+          <select id="e-negeri">
+            <option>Selangor</option><option>Kuala Lumpur</option><option>Putrajaya</option><option>Negeri Sembilan</option>
+            <option>Perak</option><option>Pahang</option><option>Johor</option><option>Melaka</option><option>Pulau Pinang</option>
+            <option>Kedah</option><option>Kelantan</option><option>Terengganu</option><option>Perlis</option>
+          </select></div>
+        <div class="field"><label for="e-pegangan">Pegangan</label>
+          <select id="e-pegangan"><option>Pegangan bebas</option><option>Pajakan</option></select></div>
+        <div class="field"><label for="e-bilik">Bilik</label><input id="e-bilik" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label for="e-bilikair">Bilik air</label><input id="e-bilikair" type="number" min="0" inputmode="numeric"></div>
+        <div class="field"><label for="e-kps">Keluasan (kps)</label><input id="e-kps" type="number" min="0" inputmode="numeric"></div>
+        <div class="field full"><label for="e-penerangan">Penerangan</label><textarea id="e-penerangan" rows="4" placeholder="Ciri utama, keadaan rumah, kemudahan berdekatan…"></textarea></div>
+      </div>
+
+      <div class="chk">
+        <label><input type="checkbox" id="e-tg"> Hantar ke Telegram channel</label>
+        <small id="tg-note">Akan dihantar automatik selepas bot Telegram disambung.</small>
+        <label><input type="checkbox" id="e-crm"> Kongsi dengan WhatsApp CRM AI agent</label>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-navy" type="button" id="save">Simpan &amp; terbitkan</button>
+        <button class="btn btn-line" type="button" id="draft">Simpan draf</button>
+        <button class="btn btn-danger" type="button" id="del">Padam</button>
+      </div>
+      <p class="toast" id="toast" role="status" hidden></p>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function () {
+  var SUPABASE_URL = 'https://ukblmuvaymkoszpcsxie.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_cHiug_yiGs3kPzNvSrOyWg_UwbKMICU';
+  var BUCKET = 'listing-photos';
+  var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { listings: [], filter: 'semua', selId: null, dragId: null };
+
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+  function rm(n) { return n === null || n === '' || n === undefined ? '—' : Number(n).toLocaleString('en-MY'); }
+  function sel() { return state.listings.find(function (l) { return l.id === state.selId; }); }
+  function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.hidden = false; }
+
+  /* ---------- auth ---------- */
+  async function boot() {
+    var res = await db.auth.getSession();
+    var session = res.data.session;
+    if (session) { showApp(session.user); } else { showLogin(); }
+  }
+  function showLogin() { $('login').hidden = false; $('app').hidden = true; $('logout').hidden = true; $('who').textContent = ''; }
+  async function showApp(user) {
+    $('login').hidden = true; $('app').hidden = false; $('logout').hidden = false; $('who').textContent = user.email;
+    await load();
+  }
+  $('login').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    $('l-err').textContent = ''; $('l-btn').disabled = true;
+    var r = await db.auth.signInWithPassword({ email: $('l-email').value.trim(), password: $('l-pass').value });
+    $('l-btn').disabled = false;
+    if (r.error) { $('l-err').textContent = 'Log masuk gagal: ' + r.error.message; return; }
+    showApp(r.data.user);
+  });
+  $('logout').addEventListener('click', async function () { await db.auth.signOut(); showLogin(); });
+
+  /* ---------- data ---------- */
+  async function load() {
+    var r = await db.from('listings').select('*').order('urutan', { ascending: true }).order('id', { ascending: false });
+    if (r.error) { alertBox('Gagal memuatkan listing: ' + r.error.message); return; }
+    state.listings = r.data || [];
+    if (state.selId && !sel()) state.selId = null;
+    render();
+  }
+  function alertBox(msg) { $('rows').innerHTML = '<li class="empty">' + esc(msg) + '</li>'; }
+
+  /* ---------- list ---------- */
+  function render() {
+    var all = state.listings;
+    var count = function (k) { return k === 'semua' ? all.length : all.filter(function (l) { return l.status === k; }).length; };
+    $('tabs').innerHTML = [['semua', 'Semua'], ['dijual', 'Dijual'], ['terjual', 'Terjual'], ['draf', 'Draf']].map(function (t) {
+      return '<button type="button" role="tab" class="tab" data-f="' + t[0] + '" aria-selected="' + (state.filter === t[0]) + '">' + t[1] + ' · ' + count(t[0]) + '</button>';
+    }).join('');
+    var vis = all.filter(function (l) { return state.filter === 'semua' || l.status === state.filter; });
+    $('empty').hidden = vis.length > 0;
+    $('rows').innerHTML = vis.map(function (l) {
+      var g = (l.gambar || [])[0];
+      var title = (l.jenis || '') + (l.taman ? ' · ' + l.taman : '');
+      return '<li class="row' + (l.id === state.selId ? ' sel' : '') + '" draggable="true" data-id="' + l.id + '">' +
+        '<span class="grip" aria-hidden="true" title="Seret untuk susun">⠿</span>' +
+        '<div class="thumb">' + (g ? '<img src="' + esc(g.url) + '" alt="" loading="lazy">' : (l.gambar || []).length + ' gambar') + '</div>' +
+        '<div class="r-main"><span class="r-title">' + esc(title || 'Listing baharu') + '</span>' +
+        '<span class="r-meta">' + esc(l.kawasan || '—') + ' · ' + (l.bilik == null ? '—' : l.bilik) + ' bilik · ' + (l.keluasan_kps == null ? '—' : l.keluasan_kps) + ' kps</span></div>' +
+        '<span class="r-price">RM ' + rm(l.harga) + '</span>' +
+        '<span class="pill p-' + l.status + '">' + l.status.toUpperCase() + '</span>' +
+        '<div class="move"><button type="button" data-mv="-1" aria-label="Naik">▲</button><button type="button" data-mv="1" aria-label="Turun">▼</button></div>' +
+        '</li>';
+    }).join('');
+    var n = all.reduce(function (s, l) { return s + (l.gambar || []).length; }, 0);
+    var mb = Math.round(n * 0.25);
+    $('storage').innerHTML = '<strong style="color:var(--navy)">Storan gambar</strong><br>' + n + ' gambar · anggaran ' + mb + ' MB daripada 1 GB<div class="bar"><div style="width:' + Math.min(100, mb / 10) + '%"></div></div>';
+    renderEditor();
+  }
+
+  $('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-f]'); if (!b) return;
+    state.filter = b.getAttribute('data-f'); render();
+  });
+  $('rows').addEventListener('click', function (e) {
+    var li = e.target.closest('.row'); if (!li) return;
+    var id = Number(li.getAttribute('data-id'));
+    var mv = e.target.closest('[data-mv]');
+    if (mv) { e.stopPropagation(); moveBy(id, Number(mv.getAttribute('data-mv'))); return; }
+    state.selId = id; $('toast').hidden = true; render();
+  });
+
+  /* drag & drop reorder */
+  $('rows').addEventListener('dragstart', function (e) {
+    var li = e.target.closest('.row'); if (!li) return;
+    state.dragId = Number(li.getAttribute('data-id'));
+    li.classList.add('dragging');
+    try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(state.dragId)); } catch (err) {}
+  });
+  $('rows').addEventListener('dragover', function (e) {
+    if (state.dragId === null) return;
+    e.preventDefault();
+    var li = e.target.closest('.row');
+    document.querySelectorAll('.row.over').forEach(function (x) { if (x !== li) x.classList.remove('over'); });
+    if (li && Number(li.getAttribute('data-id')) !== state.dragId) li.classList.add('over');
+  });
+  $('rows').addEventListener('drop', function (e) {
+    if (state.dragId === null) return;
+    e.preventDefault();
+    var li = e.target.closest('.row');
+    var from = state.dragId; state.dragId = null;
+    if (!li) return render();
+    var to = Number(li.getAttribute('data-id'));
+    if (to === from) return render();
+    var list = state.listings.slice();
+    var fi = list.findIndex(function (x) { return x.id === from; });
+    var moved = list.splice(fi, 1)[0];
+    var ti = list.findIndex(function (x) { return x.id === to; });
+    list.splice(ti, 0, moved);
+    saveOrder(list);
+  });
+  $('rows').addEventListener('dragend', function () { state.dragId = null; document.querySelectorAll('.row').forEach(function (x) { x.classList.remove('over', 'dragging'); }); });
+
+  function moveBy(id, d) {
+    var list = state.listings.slice();
+    var i = list.findIndex(function (x) { return x.id === id; });
+    var j = i + d;
+    if (j < 0 || j >= list.length) return;
+    var t = list[i]; list[i] = list[j]; list[j] = t;
+    saveOrder(list);
+  }
+  async function saveOrder(list) {
+    list.forEach(function (l, i) { l.urutan = i; });
+    state.listings = list; render();
+    var results = await Promise.all(list.map(function (l, i) { return db.from('listings').update({ urutan: i }).eq('id', l.id); }));
+    var bad = results.find(function (r) { return r.error; });
+    if (bad) { toast('Gagal simpan urutan: ' + bad.error.message, true); } else if (state.selId) { toast('Urutan disimpan. Laman ikut susunan ini.'); }
+  }
+
+  /* ---------- editor ---------- */
+  var F = { jenis: 'e-jenis', harga: 'e-harga', taman: 'e-taman', kawasan: 'e-kawasan', negeri: 'e-negeri', pegangan: 'e-pegangan', bilik: 'e-bilik', bilik_air: 'e-bilikair', keluasan_kps: 'e-kps', penerangan: 'e-penerangan' };
+  var NUM = { harga: 1, bilik: 1, bilik_air: 1, keluasan_kps: 1 };
+  var editStatus = 'draf';
+
+  function renderEditor() {
+    var l = sel();
+    $('no-sel').hidden = !!l; $('form').hidden = !l;
+    if (!l) return;
+    if ($('form').getAttribute('data-for') !== String(l.id)) {
+      $('form').setAttribute('data-for', String(l.id));
+      Object.keys(F).forEach(function (k) { $(F[k]).value = l[k] == null ? '' : l[k]; });
+      $('e-tg').checked = !!l.hantar_telegram; $('e-crm').checked = !!l.kongsi_crm;
+      editStatus = l.status;
+    }
+    $('e-id').textContent = 'ID #' + l.id;
+    document.querySelectorAll('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === editStatus)); });
+    $('tg-note').textContent = l.telegram_dihantar_pada ? 'Sudah dihantar ke Telegram.' : 'Akan dihantar automatik selepas bot Telegram disambung.';
+    renderPhotos(l);
+  }
+  $('seg').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-s]'); if (!b) return;
+    editStatus = b.getAttribute('data-s'); renderEditor();
+  });
+
+  function collect() {
+    var l = sel(); var data = {};
+    Object.keys(F).forEach(function (k) {
+      var v = $(F[k]).value;
+      data[k] = NUM[k] ? (v === '' ? null : Number(v)) : v.trim();
+    });
+    data.hantar_telegram = $('e-tg').checked;
+    data.kongsi_crm = $('e-crm').checked;
+    data.slug = slugify([data.jenis, data.taman, data.kawasan, l.id].filter(Boolean).join(' '));
+    return data;
+  }
+  async function save(status) {
+    var l = sel(); if (!l) return;
+    var data = collect();
+    data.status = status;
+    if (status === 'terjual' && !l.tarikh_terjual) data.tarikh_terjual = new Date().toISOString().slice(0, 10);
+    if (status !== 'terjual') data.tarikh_terjual = null;
+    if (status !== 'draf' && (!data.taman || !data.kawasan || data.harga === null)) {
+      toast('Isi sekurang-kurangnya Taman, Kawasan dan Harga sebelum terbitkan.', true); return;
+    }
+    $('save').disabled = $('draft').disabled = true;
+    var r = await db.from('listings').update(data).eq('id', l.id).select().single();
+    $('save').disabled = $('draft').disabled = false;
+    if (r.error) { toast('Gagal simpan: ' + r.error.message, true); return; }
+    Object.assign(l, r.data); editStatus = l.status;
+    render();
+    toast(status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
+      'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.');
+  }
+  $('save').addEventListener('click', function () { save(editStatus === 'draf' ? 'dijual' : editStatus); });
+  $('draft').addEventListener('click', function () { save('draf'); });
+  $('del').addEventListener('click', async function () {
+    var l = sel(); if (!l) return;
+    if (!window.confirm('Padam listing ini? Gambar juga akan dipadam.')) return;
+    var paths = (l.gambar || []).map(function (g) { return g.path; }).filter(Boolean);
+    if (paths.length) await db.storage.from(BUCKET).remove(paths);
+    var r = await db.from('listings').delete().eq('id', l.id);
+    if (r.error) { toast('Gagal padam: ' + r.error.message, true); return; }
+    state.listings = state.listings.filter(function (x) { return x.id !== l.id; });
+    state.selId = null; render();
+  });
+  $('add').addEventListener('click', async function () {
+    var minU = state.listings.reduce(function (m, l) { return Math.min(m, l.urutan || 0); }, 0);
+    var r = await db.from('listings').insert({ status: 'draf', urutan: minU - 1 }).select().single();
+    if (r.error) { alert('Gagal tambah listing: ' + r.error.message); return; }
+    state.listings.unshift(r.data); state.selId = r.data.id; state.filter = 'semua';
+    $('form').removeAttribute('data-for'); render();
+    $('e-taman').focus();
+  });
+
+  /* ---------- photos ---------- */
+  function renderPhotos(l) {
+    $('photos').innerHTML = (l.gambar || []).map(function (g, i) {
+      return '<div class="ph"><img src="' + esc(g.url) + '" alt="Gambar ' + (i + 1) + '">' +
+        (i === 0 ? '<span class="main">UTAMA</span>' : '<button type="button" class="star" data-main="' + i + '">Utama</button>') +
+        '<button type="button" class="x" data-rm="' + i + '" aria-label="Buang gambar">×</button></div>';
+    }).join('');
+  }
+  $('photos').addEventListener('click', async function (e) {
+    var l = sel(); if (!l) return;
+    var g = (l.gambar || []).slice();
+    var rmB = e.target.closest('[data-rm]'), mainB = e.target.closest('[data-main]');
+    if (rmB) {
+      var i = Number(rmB.getAttribute('data-rm'));
+      var p = g.splice(i, 1)[0];
+      if (p && p.path) await db.storage.from(BUCKET).remove([p.path]);
+    } else if (mainB) {
+      var k = Number(mainB.getAttribute('data-main'));
+      g.unshift(g.splice(k, 1)[0]);
+    } else { return; }
+    await setPhotos(l, g);
+  });
+  async function setPhotos(l, g) {
+    var r = await db.from('listings').update({ gambar: g }).eq('id', l.id).select('gambar').single();
+    if (r.error) { toast('Gagal kemas kini gambar: ' + r.error.message, true); return; }
+    l.gambar = r.data.gambar; render();
+  }
+
+  function compress(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      var url = URL.createObjectURL(file);
+      img.onload = function () {
+        var max = 1600, w = img.naturalWidth, h = img.naturalHeight;
+        var s = Math.min(1, max / Math.max(w, h));
+        var c = document.createElement('canvas');
+        c.width = Math.round(w * s); c.height = Math.round(h * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        URL.revokeObjectURL(url);
+        c.toBlob(function (b) {
+          if (b && b.type === 'image/webp') return resolve({ blob: b, ext: 'webp', type: 'image/webp' });
+          c.toBlob(function (j) { resolve({ blob: j || file, ext: 'jpg', type: 'image/jpeg' }); }, 'image/jpeg', 0.82);
+        }, 'image/webp', 0.8);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve({ blob: file, ext: (file.name.split('.').pop() || 'jpg').toLowerCase(), type: file.type }); };
+      img.src = url;
+    });
+  }
+  async function upload(files) {
+    var l = sel(); if (!l || !files || !files.length) return;
+    var list = Array.prototype.filter.call(files, function (f) { return /^image\//.test(f.type); });
+    if (!list.length) return;
+    var g = (l.gambar || []).slice();
+    for (var i = 0; i < list.length; i++) {
+      $('uploading').hidden = false;
+      $('uploading').textContent = 'Memuat naik ' + (i + 1) + ' / ' + list.length + '…';
+      var c = await compress(list[i]);
+      var path = 'listing-' + l.id + '/' + Date.now() + '-' + i + '.' + c.ext;
+      var up = await db.storage.from(BUCKET).upload(path, c.blob, { contentType: c.type, cacheControl: '31536000', upsert: false });
+      if (up.error) { toast('Gagal muat naik ' + list[i].name + ': ' + up.error.message, true); continue; }
+      var pub = db.storage.from(BUCKET).getPublicUrl(path);
+      g.push({ path: path, url: pub.data.publicUrl });
+    }
+    $('uploading').hidden = true;
+    await setPhotos(l, g);
+  }
+  $('file').addEventListener('change', function (e) { upload(e.target.files); e.target.value = ''; });
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function (ev) { drop.addEventListener(ev, function (e) { if (state.dragId !== null) return; e.preventDefault(); drop.classList.add('active'); }); });
+  ['dragleave', 'drop'].forEach(function (ev) { drop.addEventListener(ev, function () { drop.classList.remove('active'); }); });
+  drop.addEventListener('drop', function (e) { if (state.dragId !== null) return; e.preventDefault(); upload(e.dataTransfer && e.dataTransfer.files); });
+
+  boot();
+})();
+</script>
+</body>
+</html>
