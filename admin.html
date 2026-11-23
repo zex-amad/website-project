@@ -198,7 +198,10 @@ button{cursor:pointer}
       <div class="chk">
         <label><input type="checkbox" id="e-tg"> Hantar ke Telegram channel</label>
         <small id="tg-note"></small>
-        <button type="button" class="btn btn-line" id="tg-resend" hidden style="align-self:flex-start;min-height:36px;padding:6px 14px;font-size:13px">Hantar semula ke Telegram</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button type="button" class="btn btn-line" id="tg-resend" hidden style="min-height:36px;padding:6px 14px;font-size:13px">Hantar semula ke Telegram</button>
+          <button type="button" class="btn btn-line" id="tg-test" style="min-height:36px;padding:6px 14px;font-size:13px">Uji Telegram</button>
+        </div>
         <label><input type="checkbox" id="e-crm"> Kongsi dengan WhatsApp CRM AI agent</label>
       </div>
 
@@ -422,8 +425,30 @@ button{cursor:pointer}
     }
     if (out.skipped) { toast((prefix ? prefix + ' ' : '') + 'Telegram: ' + out.skipped); return; }
     l.telegram_dihantar_pada = out.telegram_dihantar_pada; render();
-    toast((prefix ? prefix + ' ' : '') + 'Dihantar ke Telegram channel ✓');
+    toast((prefix ? prefix + ' ' : '') + 'Dihantar ke Telegram ✓ ' + describeChat(out.sent_to));
   }
+  var JENIS_CHAT = { channel: 'channel', group: 'kumpulan', supergroup: 'kumpulan', private: 'chat peribadi' };
+  function describeChat(c) {
+    if (!c || !c.chat_type) return '';
+    var warn = c.chat_type !== 'channel' ? ' ⚠️ Ini BUKAN channel – semak TELEGRAM_CHAT_ID.' : '';
+    return '→ ' + (JENIS_CHAT[c.chat_type] || c.chat_type) + ' "' + (c.chat_title || '') + '"' +
+      (c.chat_username ? ' (' + c.chat_username + ')' : '') + ', ID ' + c.chat_id + '.' + warn;
+  }
+  $('tg-test').addEventListener('click', async function () {
+    toast('Menguji sambungan Telegram…');
+    var r = await db.functions.invoke('telegram-post', { body: { test: true } });
+    var out = r.data || {};
+    if (r.error && r.error.context && typeof r.error.context.json === 'function') {
+      try { out = await r.error.context.json(); } catch (e) {}
+    }
+    if (out.error || r.error) {
+      var why = out.error || (r.error && r.error.message);
+      if (/Failed to send|non-2xx|404/i.test(why || '') && !out.error) why += ' (Function "telegram-post" belum di-deploy, atau Verify JWT masih hidup?)';
+      toast('Ujian gagal: ' + why + (out.bot ? ' · Bot: ' + out.bot : ''), true);
+      return;
+    }
+    toast('Ujian berjaya ✓ Bot ' + (out.bot || '') + ' ' + describeChat(out.sent_to || out));
+  });
   $('tg-resend').addEventListener('click', function () {
     var l = sel(); if (!l) return;
     if (!window.confirm('Hantar semula listing ini ke Telegram channel?')) return;

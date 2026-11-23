@@ -72,6 +72,16 @@ function caption(l: Record<string, any>) {
   return lines.filter((x) => x !== "").join("\n").slice(0, 1024);
 }
 
+function chatInfo(c: Record<string, any> | undefined) {
+  if (!c) return {};
+  return {
+    chat_id: c.id,
+    chat_type: c.type, // channel | group | supergroup | private
+    chat_title: c.title ?? [c.first_name, c.last_name].filter(Boolean).join(" "),
+    chat_username: c.username ? "@" + c.username : null,
+  };
+}
+
 async function tg(token: string, method: string, payload: unknown) {
   const res = await fetch(`https://api.telegram.org/bot${token}/${method}`, {
     method: "POST",
@@ -101,8 +111,29 @@ Deno.serve(async (req) => {
     const { data: isAdmin, error: adminErr } = await asUser.rpc("is_admin");
     if (adminErr || !isAdmin) return json({ error: "Hanya admin boleh hantar ke Telegram." }, 403);
 
+    const body = await req.json();
+
+    // Mod ujian: hantar mesej ujian dan laporkan ke mana ia pergi
+    if (body.test) {
+      let info: Record<string, unknown> = {};
+      try {
+        const me = await tg(token, "getMe", {});
+        info.bot = "@" + me.result.username;
+      } catch (e) {
+        return json({ error: "Token bot tidak sah: " + (e instanceof Error ? e.message : String(e)) }, 400);
+      }
+      try {
+        const c = await tg(token, "getChat", { chat_id: chat });
+        info = { ...info, ...chatInfo(c.result) };
+      } catch (e) {
+        return json({ ...info, error: `Bot tidak dapat cari chat "${chat}": ` + (e instanceof Error ? e.message : String(e)) }, 400);
+      }
+      const sent = await tg(token, "sendMessage", { chat_id: chat, text: "✅ Ujian sambungan bot Zack Ahmad. Jika anda nampak mesej ini di channel, sambungan berjaya." });
+      return json({ ok: true, test: true, ...info, sent_to: chatInfo(sent.result.chat) });
+    }
+
     // 2. Ambil listing
-    const { id, force } = await req.json();
+    const { id, force } = body;
     const db = createClient(url, secretKey);
     const { data: l, error } = await db.from("listings").select("*").eq("id", id).single();
     if (error || !l) return json({ error: "Listing tidak dijumpai." }, 404);
@@ -114,21 +145,23 @@ Deno.serve(async (req) => {
     // 3. Hantar ke channel
     const text = caption(l);
     const photos: string[] = (l.gambar ?? []).map((g: { url: string }) => g.url).filter(Boolean).slice(0, 10);
+    let res;
     if (photos.length >= 2) {
-      await tg(token, "sendMediaGroup", {
+      res = await tg(token, "sendMediaGroup", {
         chat_id: chat,
         media: photos.map((p, i) => (i === 0 ? { type: "photo", media: p, caption: text, parse_mode: "HTML" } : { type: "photo", media: p })),
       });
     } else if (photos.length === 1) {
-      await tg(token, "sendPhoto", { chat_id: chat, photo: photos[0], caption: text, parse_mode: "HTML" });
+      res = await tg(token, "sendPhoto", { chat_id: chat, photo: photos[0], caption: text, parse_mode: "HTML" });
     } else {
-      await tg(token, "sendMessage", { chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true });
+      res = await tg(token, "sendMessage", { chat_id: chat, text, parse_mode: "HTML", disable_web_page_preview: true });
     }
 
     // 4. Tandakan sudah dihantar
     const sentAt = new Date().toISOString();
     await db.from("listings").update({ telegram_dihantar_pada: sentAt }).eq("id", id);
-    return json({ ok: true, telegram_dihantar_pada: sentAt });
+    const first = Array.isArray(res.result) ? res.result[0] : res.result;
+    return json({ ok: true, telegram_dihantar_pada: sentAt, sent_to: chatInfo(first?.chat) });
   } catch (e) {
     return json({ error: e instanceof Error ? e.message : String(e) }, 500);
   }
