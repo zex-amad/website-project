@@ -12,7 +12,7 @@ alter table public.admins enable row level security;
 -- Tiada polisi: jadual ini tidak boleh dibaca melalui API awam.
 
 insert into public.admins (email)
-values ('zakariaahmad@legacyrealty.my')
+values ('zakaria.ahmad.1991@gmail.com')
 on conflict (email) do nothing;
 
 create or replace function public.is_admin()
