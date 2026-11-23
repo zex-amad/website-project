@@ -49,6 +49,8 @@ button{cursor:pointer}
 .head-row{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
 .sub{margin:4px 0 0;font-size:14px;color:var(--ink-muted)}
 .tabs{display:flex;flex-wrap:wrap;gap:8px}
+.toolbar{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.toolbar .field label{font-size:12px}
 .tab{font-size:14px;font-weight:600;background:#fff;color:var(--navy);border:1px solid var(--input);border-radius:999px;padding:8px 16px;min-height:40px}
 .tab[aria-selected="true"]{background:var(--navy);color:var(--cream);border-color:var(--navy)}
 
@@ -136,6 +138,23 @@ button{cursor:pointer}
       </div>
       <button class="btn btn-navy" id="add">＋ Tambah listing</button>
     </div>
+    <div class="toolbar">
+      <div class="field" style="flex:2 1 220px"><label for="q">Cari</label><input id="q" type="search" placeholder="Taman, kawasan, jenis, harga, ID…" autocomplete="off"></div>
+      <div class="field"><label for="f-jenis">Jenis</label><select id="f-jenis"><option value="">Semua jenis</option></select></div>
+      <div class="field"><label for="f-kawasan">Kawasan</label><select id="f-kawasan"><option value="">Semua kawasan</option></select></div>
+      <div class="field"><label for="sort">Susun ikut</label>
+        <select id="sort">
+          <option value="urutan">Urutan di laman</option>
+          <option value="baru">Terbaru ditambah</option>
+          <option value="kemaskini">Terakhir dikemas kini</option>
+          <option value="harga-asc">Harga: rendah → tinggi</option>
+          <option value="harga-desc">Harga: tinggi → rendah</option>
+          <option value="kps-desc">Keluasan: besar → kecil</option>
+          <option value="kawasan">Kawasan: A → Z</option>
+        </select></div>
+      <button type="button" class="btn btn-line" id="clear" hidden style="min-height:44px">Kosongkan</button>
+    </div>
+    <p class="sub" id="result-note" hidden></p>
     <div class="tabs" role="tablist" id="tabs"></div>
     <ul class="rows" id="rows" aria-label="Senarai listing"></ul>
     <p class="empty" id="empty" hidden>Tiada listing dalam kategori ini.</p>
@@ -223,7 +242,7 @@ button{cursor:pointer}
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   var $ = function (id) { return document.getElementById(id); };
-  var state = { listings: [], filter: 'semua', selId: null, dragId: null };
+  var state = { listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -269,19 +288,44 @@ button{cursor:pointer}
     $('tabs').innerHTML = [['semua', 'Semua'], ['dijual', 'Dijual'], ['terjual', 'Terjual'], ['draf', 'Draf']].map(function (t) {
       return '<button type="button" role="tab" class="tab" data-f="' + t[0] + '" aria-selected="' + (state.filter === t[0]) + '">' + t[1] + ' · ' + count(t[0]) + '</button>';
     }).join('');
-    var vis = all.filter(function (l) { return state.filter === 'semua' || l.status === state.filter; });
+    fillOptions('f-jenis', all.map(function (l) { return l.jenis; }), 'Semua jenis', state.jenis);
+    fillOptions('f-kawasan', all.map(function (l) { return l.kawasan; }), 'Semua kawasan', state.kawasan);
+    var q = state.q.trim().toLowerCase();
+    var vis = all.filter(function (l) {
+      if (state.filter !== 'semua' && l.status !== state.filter) return false;
+      if (state.jenis && l.jenis !== state.jenis) return false;
+      if (state.kawasan && (l.kawasan || '') !== state.kawasan) return false;
+      if (!q) return true;
+      var hay = [l.jenis, l.taman, l.kawasan, l.negeri, l.pegangan, l.penerangan, '#' + l.id, l.harga, l.harga ? rm(l.harga) : '', l.bilik != null ? l.bilik + ' bilik' : ''].join(' ').toLowerCase();
+      return q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
+    });
+    var num = function (v) { return v === null || v === undefined || v === '' ? -1 : Number(v); };
+    var SORTS = {
+      baru: function (a, b) { return b.id - a.id; },
+      kemaskini: function (a, b) { return String(b.updated_at || '').localeCompare(String(a.updated_at || '')); },
+      'harga-asc': function (a, b) { return (num(a.harga) < 0 ? Infinity : num(a.harga)) - (num(b.harga) < 0 ? Infinity : num(b.harga)); },
+      'harga-desc': function (a, b) { return num(b.harga) - num(a.harga); },
+      'kps-desc': function (a, b) { return num(b.keluasan_kps) - num(a.keluasan_kps); },
+      kawasan: function (a, b) { return String(a.kawasan || '').localeCompare(String(b.kawasan || ''), 'ms'); }
+    };
+    if (SORTS[state.sort]) vis = vis.slice().sort(SORTS[state.sort]);
+    state.locked = state.sort !== 'urutan' || !!q || !!state.jenis || !!state.kawasan;
+    var filtered = !!q || !!state.jenis || !!state.kawasan || state.sort !== 'urutan';
+    $('clear').hidden = !filtered;
+    $('result-note').hidden = !filtered;
+    $('result-note').textContent = vis.length + ' listing dijumpai' + (state.locked ? ' · Untuk susun dengan seret atau ▲▼, pilih "Urutan di laman" dan kosongkan carian.' : '');
     $('empty').hidden = vis.length > 0;
     $('rows').innerHTML = vis.map(function (l) {
       var g = (l.gambar || [])[0];
       var title = (l.jenis || '') + (l.taman ? ' · ' + l.taman : '');
-      return '<li class="row' + (l.id === state.selId ? ' sel' : '') + '" draggable="true" data-id="' + l.id + '">' +
-        '<span class="grip" aria-hidden="true" title="Seret untuk susun">⠿</span>' +
+      return '<li class="row' + (l.id === state.selId ? ' sel' : '') + '" draggable="' + !state.locked + '" data-id="' + l.id + '">' +
+        (state.locked ? '' : '<span class="grip" aria-hidden="true" title="Seret untuk susun">⠿</span>') +
         '<div class="thumb">' + (g ? '<img src="' + esc(g.url) + '" alt="" loading="lazy">' : (l.gambar || []).length + ' gambar') + '</div>' +
         '<div class="r-main"><span class="r-title">' + esc(title || 'Listing baharu') + '</span>' +
         '<span class="r-meta">' + esc(l.kawasan || '—') + ' · ' + (l.bilik == null ? '—' : l.bilik) + ' bilik · ' + (l.keluasan_kps == null ? '—' : l.keluasan_kps) + ' kps</span></div>' +
         '<span class="r-price">RM ' + rm(l.harga) + '</span>' +
         '<span class="pill p-' + l.status + '">' + l.status.toUpperCase() + '</span>' +
-        '<div class="move"><button type="button" data-mv="-1" aria-label="Naik">▲</button><button type="button" data-mv="1" aria-label="Turun">▼</button></div>' +
+        (state.locked ? '' : '<div class="move"><button type="button" data-mv="-1" aria-label="Naik">▲</button><button type="button" data-mv="1" aria-label="Turun">▼</button></div>') +
         '</li>';
     }).join('');
     var n = all.reduce(function (s, l) { return s + (l.gambar || []).length; }, 0);
@@ -289,6 +333,23 @@ button{cursor:pointer}
     $('storage').innerHTML = '<strong style="color:var(--navy)">Storan gambar</strong><br>' + n + ' gambar · anggaran ' + mb + ' MB daripada 1 GB<div class="bar"><div style="width:' + Math.min(100, mb / 10) + '%"></div></div>';
     renderEditor();
   }
+
+  function fillOptions(id, values, allLabel, current) {
+    var uniq = values.filter(function (v, i, a) { return v && a.indexOf(v) === i; }).sort(function (a, b) { return a.localeCompare(b, 'ms'); });
+    if (current && uniq.indexOf(current) === -1) uniq.push(current);
+    var html = '<option value="">' + allLabel + '</option>' + uniq.map(function (v) { return '<option' + (v === current ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join('');
+    if ($(id).getAttribute('data-html') !== html) { $(id).innerHTML = html; $(id).setAttribute('data-html', html); }
+    $(id).value = current;
+  }
+  var qTimer;
+  $('q').addEventListener('input', function (e) { clearTimeout(qTimer); qTimer = setTimeout(function () { state.q = e.target.value; render(); }, 150); });
+  $('f-jenis').addEventListener('change', function (e) { state.jenis = e.target.value; render(); });
+  $('f-kawasan').addEventListener('change', function (e) { state.kawasan = e.target.value; render(); });
+  $('sort').addEventListener('change', function (e) { state.sort = e.target.value; render(); });
+  $('clear').addEventListener('click', function () {
+    state.q = ''; state.jenis = ''; state.kawasan = ''; state.sort = 'urutan';
+    $('q').value = ''; $('sort').value = 'urutan'; render();
+  });
 
   $('tabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-f]'); if (!b) return;
@@ -304,6 +365,7 @@ button{cursor:pointer}
 
   /* drag & drop reorder */
   $('rows').addEventListener('dragstart', function (e) {
+    if (state.locked) { e.preventDefault(); return; }
     var li = e.target.closest('.row'); if (!li) return;
     state.dragId = Number(li.getAttribute('data-id'));
     li.classList.add('dragging');
@@ -334,6 +396,7 @@ button{cursor:pointer}
   $('rows').addEventListener('dragend', function () { state.dragId = null; document.querySelectorAll('.row').forEach(function (x) { x.classList.remove('over', 'dragging'); }); });
 
   function moveBy(id, d) {
+    if (state.locked) return;
     var list = state.listings.slice();
     var i = list.findIndex(function (x) { return x.id === id; });
     var j = i + d;
