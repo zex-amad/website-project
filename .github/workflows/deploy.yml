@@ -28,9 +28,18 @@ jobs:
           node-version: 22
       - name: Jana halaman listing
         run: node scripts/build-site.mjs
+        env:
+          # Push (perubahan kod/kandungan): maklumkan semua URL. Jadual setiap jam: hanya yang berubah.
+          INDEXNOW_ALL: ${{ github.event_name == 'push' && '1' || '0' }}
       - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
+      - uses: actions/upload-artifact@v5
+        with:
+          name: indexnow
+          path: |
+            indexnow-urls.json
+            *.txt
 
   deploy:
     needs: build
@@ -41,3 +50,17 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
+
+  indexnow:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/download-artifact@v5
+        with:
+          name: indexnow
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Maklumkan Bing melalui IndexNow
+        run: node scripts/indexnow.mjs

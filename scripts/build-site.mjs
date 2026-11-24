@@ -16,7 +16,7 @@ const SITE = "https://zackahmad.my";
 const SB_URL = "https://ukblmuvaymkoszpcsxie.supabase.co";
 const SB_KEY = "sb_publishable_cHiug_yiGs3kPzNvSrOyWg_UwbKMICU"; // kunci awam (dilindungi RLS)
 const WA = "60196071970";
-const EXCLUDE = new Set([".git", ".github", "scripts", "supabase", "data", "_site", "node_modules", "README.md", "sitemap.xml"]);
+const EXCLUDE = new Set([".git", ".github", "scripts", "supabase", "data", "_site", "node_modules", "README.md", "sitemap.xml", "indexnow-urls.json"]);
 
 // Kawasan tetap di laman utama (mesti sama dengan senarai AREAS dalam index.html)
 const AREAS = [
@@ -99,6 +99,15 @@ async function copyDir(src, dst) {
 
 /* ---------------- data ---------------- */
 let REVIEWS = null;
+const GUIDES = new Map(); // panduan kawasan: data/kawasan/{slug-kawasan}.json
+try {
+  for (const f of await fs.readdir(path.join(ROOT, "data", "kawasan"))) {
+    if (!f.endsWith(".json")) continue;
+    const g = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", f), "utf8"));
+    GUIDES.set(slugify(g.kawasan), g);
+  }
+} catch { /* tiada panduan */ }
+export const INDEXNOW_KEY = "d79b637a3c99c35e28393fa9726a879a";
 try { REVIEWS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "reviews.json"), "utf8")); } catch { /* tiada ulasan */ }
 async function loadListings() {
   if (process.env.LISTINGS_JSON) return JSON.parse(await fs.readFile(process.env.LISTINGS_JSON, "utf8"));
@@ -381,6 +390,48 @@ function areaChips(dijual) {
     .map(([href, v]) => `<a class="chip" href="${href}">${esc(v.name)}${v.n ? ` · ${v.n}` : ""}</a>`).join("")}</div></section>`;
 }
 
+/* ---------------- area guide page ---------------- */
+function guidePage(g, href, d, t) {
+  const crumbs = [["Utama", "/"], ["Rumah Dijual", "/rumah-dijual/"], [g.negeri, "/rumah-dijual/"], [g.kawasan, href]];
+  const ul = (xs) => `<ul class="near">${(xs || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
+  const block = (title, inner) => `<section class="section"><h2 style="font-size:26px;font-weight:800">${title}</h2>${inner}</section>`;
+  const updated = g.dikemaskini ? fmtDate(g.dikemaskini) : "";
+  const body = `<section style="background:var(--navy);color:var(--cream)"><div class="wrap" style="padding-bottom:48px">
+${crumbHtml(crumbs).replace('class="crumb"', 'class="crumb" style="color:var(--muted-2)"').replace(/<a /g, '<a style="color:var(--muted-2)" ')}
+<div style="display:flex;flex-direction:column;gap:16px;max-width:820px;padding-top:12px">
+<span class="eyebrow" style="color:var(--accent)">Panduan kawasan · Daerah ${esc(g.daerah || "")}</span>
+<h1 style="font-weight:800;font-size:clamp(34px,5vw,58px)">Rumah untuk dijual di ${esc(g.kawasan)}</h1>
+<p style="font-size:18px;line-height:1.7;color:var(--muted)">${esc(g.ringkasan)}</p>
+<div class="chips">${(g.sorotan || []).map((x) => `<span class="chip" style="background:transparent;color:var(--cream);border-color:var(--line)">${esc(x)}</span>`).join("")}</div>
+<span class="meta" style="color:var(--muted-2)">${updated ? `Dikemas kini <time datetime="${esc(g.dikemaskini)}">${updated}</time> · ` : ""}Oleh <a href="/" style="color:var(--muted-2)">Zack Ahmad</a>, REN 36121</span>
+</div></div></section>
+<main class="wrap">
+${block(`Rumah dijual di ${esc(g.kawasan)}`, d.length ? `<div class="cards">${d.map(card).join("")}</div>` : `<p class="empty">Tiada listing aktif di ${esc(g.kawasan)} buat masa ini. <a href="${waLink(`Salam Zack, saya cari rumah di ${g.kawasan}.`)}">WhatsApp Zack, saya bantu carikan →</a></p>`)}
+${block(`Kenapa ${esc(g.kawasan)}`, (g.pengenalan || []).map((p) => `<p style="font-size:17px;line-height:1.75;color:var(--ink);max-width:820px">${esc(p)}</p>`).join(""))}
+${g.taman && g.taman.length ? block("Taman &amp; kawasan perumahan popular", `<div class="chips">${g.taman.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>`) : ""}
+<div style="display:flex;flex-wrap:wrap;gap:0 40px">
+${g.pengangkutan && g.pengangkutan.length ? `<div style="flex:1 1 340px">${block("Pengangkutan", ul(g.pengangkutan))}</div>` : ""}
+${g.pendidikan && g.pendidikan.length ? `<div style="flex:1 1 340px">${block("Sekolah &amp; universiti", ul(g.pendidikan))}</div>` : ""}
+</div>
+${g.kemudahan && g.kemudahan.length ? block("Kemudahan &amp; tarikan berdekatan", ul(g.kemudahan)) : ""}
+${g.harga ? `<section class="section"><div class="box"><h2 style="font-size:24px">Harga pasaran rumah di ${esc(g.kawasan)}</h2><p>${esc(g.harga.teks)}</p>${g.harga.sumber_url ? `<span class="meta">Sumber: <a href="${esc(g.harga.sumber_url)}" rel="nofollow noopener" target="_blank">${esc(g.harga.sumber_nama)}</a></span>` : ""}</div></section>` : ""}
+${g.nota_zack ? `<section class="section"><div class="nota"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="56" height="56"><div><h2>Nota Zack tentang ${esc(g.kawasan)}</h2><p>${esc(g.nota_zack)}</p><span>Zack Ahmad · Perunding Hartanah Berdaftar REN 36121</span></div></div></section>` : ""}
+${g.faq && g.faq.length ? `<section class="section faq"><h2 style="font-size:26px;font-weight:800">Soalan lazim tentang ${esc(g.kawasan)}</h2><div>${g.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</div></section>` : ""}
+${t.length ? block(`Rekod jualan di ${esc(g.kawasan)}`, `<div class="cards">${t.slice(0, 6).map(card).join("")}</div>`) : ""}
+<section class="section" style="gap:10px"><div class="box" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between"><div><h2 style="font-size:22px">Nak beli atau jual rumah di ${esc(g.kawasan)}?</h2><p class="meta" style="font-size:15px">Zack Ahmad · Perunding Hartanah Berdaftar REN 36121 · hampir 10 tahun pengalaman</p></div><a class="btn btn-navy" href="${waLink(`Salam Zack, saya nak tanya tentang rumah di ${g.kawasan}.`)}" target="_blank" rel="noopener">WhatsApp Zack</a></div></section>
+${g.sumber && g.sumber.length ? `<section class="section" style="font-size:13px;color:var(--ink);gap:6px"><strong>Sumber</strong><ul style="margin:0;padding-left:18px;line-height:1.8">${g.sumber.map(([n, u]) => `<li><a href="${esc(u)}" rel="nofollow noopener" target="_blank">${esc(n)}</a></li>`).join("")}</ul></section>` : ""}
+</main>`;
+  const jsonld = { "@context": "https://schema.org", "@graph": [
+    { "@type": "WebPage", name: `Rumah untuk dijual di ${g.kawasan}`, url: SITE + href, description: g.ringkasan, dateModified: g.dikemaskini, inLanguage: "ms-MY",
+      about: { "@type": "Place", name: g.kawasan, address: { "@type": "PostalAddress", addressLocality: g.kawasan, addressRegion: g.negeri, addressCountry: "MY" } },
+      author: { "@type": "RealEstateAgent", "@id": SITE + "/#zack", name: "Zack Ahmad" } },
+    crumbLd(crumbs),
+    { "@type": "ItemList", itemListElement: d.map((l, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + listingPath(l), name: titleOf(l) })) },
+    ...(g.faq && g.faq.length ? [{ "@type": "FAQPage", mainEntity: g.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }] : []),
+  ] };
+  return page({ title: g.tajuk_seo || `Rumah Untuk Dijual di ${g.kawasan} | Zack Ahmad`, desc: g.ringkasan.length > 158 ? g.ringkasan.slice(0, 155).replace(/\s+\S*$/, "") + "…" : g.ringkasan, canonical: href, jsonld, body });
+}
+
 /* ---------------- homepage prerender ---------------- */
 function homeCard(l) {
   const title = titleOf(l);
@@ -404,6 +455,9 @@ async function main() {
   await copyDir(ROOT, OUT);
 
   const urls = [{ loc: "/", pri: "1.0" }, { loc: "/rumah-dijual/", pri: "0.9" }, { loc: "/terjual/", pri: "0.6" }];
+  // IndexNow: listing yang berubah dalam 3 jam lepas (bina setiap jam), atau semua URL bila INDEXNOW_ALL=1
+  const recent = Date.now() - 3 * 60 * 60 * 1000;
+  const changed = { listings: all.filter((l) => new Date(l.updated_at || 0).getTime() > recent), areas: new Set() };
 
   for (const l of all) {
     await write(path.join(listingPath(l), "index.html"), listingPage(l, all));
@@ -427,9 +481,17 @@ async function main() {
   const areas = new Map();
   for (const [k, n] of AREAS) areas.set(areaPath(k, n), { kawasan: k, negeri: n });
   for (const l of all) if (l.kawasan) { const key = areaPath(l.kawasan, l.negeri); if (!areas.has(key)) areas.set(key, { kawasan: l.kawasan, negeri: l.negeri || "Selangor" }); }
+  for (const g of GUIDES.values()) { const key = areaPath(g.kawasan, g.negeri); if (!areas.has(key)) areas.set(key, { kawasan: g.kawasan, negeri: g.negeri || "Selangor" }); }
   for (const [href, a] of areas) {
     const inArea = (l) => slugify(l.kawasan) === slugify(a.kawasan) && slugify(l.negeri || "Selangor") === slugify(a.negeri);
     const d = dijual.filter(inArea), t = terjual.filter(inArea);
+    const guide = GUIDES.get(slugify(a.kawasan));
+    if (guide) {
+      await write(path.join(href, "index.html"), guidePage(guide, href, d, t));
+      urls.push({ loc: href, lastmod: guide.dikemaskini, pri: "0.8" });
+      changed.areas.add(href);
+      continue;
+    }
     const soldBlock = t.length ? `<section class="section"><h2 style="font-size:26px;font-weight:800">Rekod jualan di ${esc(a.kawasan)}</h2><div class="cards">${t.slice(0, 6).map(card).join("")}</div></section>` : "";
     await write(path.join(href, "index.html"), listPage({
       canonical: href, title: `Rumah Untuk Dijual di ${a.kawasan}, ${a.negeri} | Zack Ahmad, REN 36121`,
@@ -441,6 +503,17 @@ async function main() {
     }));
     if (d.length || t.length) urls.push({ loc: href, pri: "0.7" });
   }
+
+  // Senarai URL untuk IndexNow (dibaca oleh scripts/indexnow.mjs selepas deploy)
+  let notify;
+  if (process.env.INDEXNOW_ALL === "1") notify = urls.map((u) => SITE + u.loc);
+  else {
+    const set = new Set();
+    for (const l of changed.listings) { set.add(SITE + listingPath(l)); set.add(SITE + areaPath(l.kawasan, l.negeri)); }
+    if (set.size) { set.add(SITE + "/"); set.add(SITE + "/rumah-dijual/"); set.add(SITE + "/terjual/"); }
+    notify = [...set];
+  }
+  await fs.writeFile(path.join(ROOT, "indexnow-urls.json"), JSON.stringify(notify, null, 2));
 
   // 404
   await write("404.html", page({ title: "Halaman tidak dijumpai | Zack Ahmad", desc: "Halaman tidak dijumpai.", canonical: "/404.html", noindex: true,
@@ -458,7 +531,7 @@ async function main() {
   try {
     let llms = await fs.readFile(llmsFile, "utf8");
     const lines = dijual.map((l) => `- [${titleOf(l)}](${SITE}${listingPath(l)}): ${num(l.harga) ? "RM " + num(l.harga) + ", " : ""}${[l.bilik != null ? l.bilik + " bilik" : "", l.keluasan_kps != null ? num(l.keluasan_kps) + " kps" : "", l.pegangan].filter(Boolean).join(", ")}`);
-    const block = `\n## Rumah untuk dijual (dikemas kini ${new Date().toISOString().slice(0, 10)})\n\n${lines.length ? lines.join("\n") : "- Tiada listing aktif buat masa ini."}\n- [Semua rumah dijual](${SITE}/rumah-dijual/)\n- [Rekod jualan](${SITE}/terjual/)\n`;
+    const block = `\n## Rumah untuk dijual (dikemas kini ${new Date().toISOString().slice(0, 10)})\n\n${lines.length ? lines.join("\n") : "- Tiada listing aktif buat masa ini."}\n- [Semua rumah dijual](${SITE}/rumah-dijual/)\n${[...GUIDES.values()].map((g) => `- [Panduan kawasan: ${g.kawasan}](${SITE}${areaPath(g.kawasan, g.negeri)})\n`).join("")}- [Rekod jualan](${SITE}/terjual/)\n`;
     llms = llms.replace(/\n## Optional/, block + "\n## Optional");
     await fs.writeFile(llmsFile, llms);
   } catch { /* tiada llms.txt */ }
