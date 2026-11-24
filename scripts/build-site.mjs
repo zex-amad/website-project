@@ -197,6 +197,10 @@ table{border-collapse:collapse;font-size:15px;width:100%;max-width:560px}th,td{t
 .prose{display:flex;flex-direction:column;gap:16px;font-size:17px;line-height:1.8;color:var(--ink)}
 .prose h2{font-size:28px;font-weight:800;color:var(--navy);margin-top:20px;scroll-margin-top:96px}.prose h3{font-size:21px;font-weight:800;color:var(--navy)}
 .prose ul,.prose ol{margin:0;padding-left:22px}.prose li{margin:4px 0}.prose strong{color:var(--navy)}
+.prose .tbl{overflow-x:auto;background:#fff;border:1px solid var(--cl);border-radius:14px}
+.prose table{max-width:none;min-width:560px;font-size:15px}.prose th,.prose td{padding:12px 14px;vertical-align:top;border-bottom:1px solid var(--cl)}
+.prose thead th{background:var(--navy);color:var(--cream);font-weight:600;width:auto}.prose tbody th{color:var(--navy);font-weight:600;width:28%}
+.prose tbody tr:last-child th,.prose tbody tr:last-child td{border-bottom:0}
 .prose .tip{background:#FBF4E6;border-radius:14px;padding:16px 18px;color:var(--navy)}
 .art-cta{background:var(--navy);color:var(--cream);border-radius:20px;padding:28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:16px}
 .art-cta>div{flex:1 1 360px;display:flex;flex-direction:column;gap:6px}.art-cta strong{font:800 22px var(--head)}.art-cta span{color:var(--muted)}
@@ -520,7 +524,8 @@ try {
 function mdInline(t) {
   return esc(t)
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g, '<a href="$2">$1</a>');
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/\[([^\]]+)\]\((\/[^)\s]*)\)/g, '<a href="$2">$1</a>');
 }
 function mdToHtml(md) {
   const toc = [];
@@ -533,6 +538,12 @@ function mdToHtml(md) {
       return `<h2 id="${id}">${mdInline(t)}</h2>`;
     }
     if (/^###\s/.test(lines[0])) return `<h3>${mdInline(lines[0].replace(/^###\s+/, ""))}</h3>`;
+    if (lines.length > 1 && lines.every((l) => /^\s*\|/.test(l))) {
+      const cells = (l) => l.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((c) => c.trim());
+      const rows = lines.filter((l) => !/^\s*\|?\s*:?-{2,}/.test(l)).map(cells);
+      const [head, ...rest] = rows;
+      return `<div class="tbl"><table><thead><tr>${head.map((c) => `<th scope="col">${mdInline(c)}</th>`).join("")}</tr></thead><tbody>${rest.map((r) => `<tr>${r.map((c, i) => i === 0 ? `<th scope="row">${mdInline(c)}</th>` : `<td>${mdInline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+    }
     if (lines.every((l) => /^[*-]\s/.test(l))) return `<ul>${lines.map((l) => `<li>${mdInline(l.replace(/^[*-]\s+/, ""))}</li>`).join("")}</ul>`;
     if (lines.every((l) => /^\d+\.\s/.test(l))) return `<ol>${lines.map((l) => `<li>${mdInline(l.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
     const text = lines.join(" ");
