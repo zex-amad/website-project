@@ -1,6 +1,6 @@
 ---
-tajuk: Hati-Hati Beli Rumah Direct Owner! Ini Kes Penipuan Sebenar Yang Pernah Berlaku di Malaysia
-tajuk_seo: Penipuan Beli Rumah Direct Owner: 4 Kes Sebenar & 5 Semakan Wajib | Zack Ahmad
+tajuk: Hati-Hati Beli Rumah Harga “Too Good To Be True”! Ini Kes Penipuan Sebenar Yang Pernah Berlaku di Malaysia
+tajuk_seo: Rumah Harga “Too Good To Be True”: 4 Kes Penipuan Sebenar & 5 Semakan Wajib | Zack Ahmad
 slug: penipuan-beli-rumah-direct-owner
 kategori: Pembeli
 tarikh: 2026-11-24
