@@ -41,6 +41,43 @@ const soldWhen = (l) => {
   const d = new Date(l.tarikh_terjual);
   return `Terjual ${BULAN[d.getMonth()]} ${d.getFullYear()}`;
 };
+const fmtDate = (d) => { if (!d) return ""; const x = new Date(d); return `${x.getDate()} ${BULAN[x.getMonth()]} ${x.getFullYear()}`; };
+const monthly = (harga) => {
+  const loan = Number(harga) * 0.9, r = 0.042 / 12, n = 35 * 12;
+  return Math.round((loan * r) / (1 - Math.pow(1 + r, -n)) / 10) * 10;
+};
+const lines = (t) => String(t || "").split(/\r?\n/).map((x) => x.replace(/^[-•*]\s*/, "").trim()).filter(Boolean);
+function autoSummary(l) {
+  const sold = l.status === "terjual";
+  const perKps = l.harga && l.keluasan_kps ? num(Math.round(l.harga / l.keluasan_kps)) : null;
+  const where = [l.taman, l.kawasan, l.negeri].filter(Boolean).join(", ");
+  const head = `${l.jenis}${l.status_lot ? " lot " + l.status_lot : ""} di ${where}`;
+  const specs = [l.bilik != null ? `${l.bilik} bilik` : "", l.bilik_air != null ? `${l.bilik_air} bilik air` : "",
+    l.keluasan_kps != null ? `keluasan binaan ${num(l.keluasan_kps)} kps` : ""].filter(Boolean).join(", ");
+  const extra = [l.keluasan_tanah ? `atas tanah ${l.keluasan_tanah}` : "", l.arah ? String(l.arah).toLowerCase() : ""].filter(Boolean).join(", ");
+  const parts = [
+    sold ? `${head}, telah dijual (${soldWhen(l).toLowerCase()}).` : `${head}, untuk dijual pada RM ${num(l.harga)}${perKps ? ` (kira-kira RM ${perKps} sekaki persegi)` : ""}.`,
+    specs ? `${specs.charAt(0).toUpperCase() + specs.slice(1)}${extra ? ", " + extra : ""}${l.pegangan ? `, ${String(l.pegangan).toLowerCase()}` : ""}.` : "",
+    l.keadaan ? `Keadaan: ${String(l.keadaan).toLowerCase()}${l.perabot ? `, ${String(l.perabot).toLowerCase()}` : ""}.` : "",
+    "Diuruskan oleh Zack Ahmad, Perunding Hartanah Berdaftar REN 36121.",
+  ];
+  return parts.filter(Boolean).join(" ");
+}
+function faqFor(l) {
+  const sold = l.status === "terjual";
+  const q = [];
+  if (sold) {
+    q.push([`Ada rumah serupa untuk dijual di ${l.kawasan}?`, `Rumah ini sudah terjual. WhatsApp Zack Ahmad di +6019-607 1970 untuk senarai rumah terkini di ${l.kawasan}, atau lihat halaman rumah dijual di ${l.kawasan}.`]);
+    return q;
+  }
+  const perKps = l.harga && l.keluasan_kps ? num(Math.round(l.harga / l.keluasan_kps)) : null;
+  if (l.harga) q.push([`Berapa harga ${l.jenis.toLowerCase()} di ${l.taman} ini?`, `RM ${num(l.harga)}${perKps ? `, iaitu kira-kira RM ${perKps} sekaki persegi untuk keluasan binaan ${num(l.keluasan_kps)} kps` : ""}.`]);
+  if (l.harga) q.push(["Berapa anggaran bayaran bulanan?", `Sekitar RM ${num(monthly(l.harga))} sebulan untuk pinjaman 90% selama 35 tahun pada kadar 4.2% setahun. Kadar sebenar bergantung pada bank dan kelayakan anda.`]);
+  if (l.status_lot || l.pegangan) q.push(["Apakah status lot dan pegangan rumah ini?", [l.status_lot ? `Lot ${l.status_lot}` : "", l.pegangan ? `pegangan ${String(l.pegangan).toLowerCase()}` : ""].filter(Boolean).join(", ") + "."]);
+  if (l.yuran_penyelenggaraan) q.push(["Berapa yuran penyelenggaraan?", `RM ${num(l.yuran_penyelenggaraan)} sebulan.`]);
+  q.push(["Bagaimana nak lawat atau buat tawaran?", `WhatsApp Zack Ahmad (REN 36121) di +6019-607 1970 dan sebut ID listing #${l.id} untuk tetapkan masa lawatan.`]);
+  return q;
+}
 const waLink = (text) => `https://wa.me/${WA}?text=${encodeURIComponent(text)}`;
 const photos = (l) => (Array.isArray(l.gambar) ? l.gambar : []).map((g) => g && g.url).filter(Boolean);
 
@@ -65,8 +102,7 @@ let REVIEWS = null;
 try { REVIEWS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "reviews.json"), "utf8")); } catch { /* tiada ulasan */ }
 async function loadListings() {
   if (process.env.LISTINGS_JSON) return JSON.parse(await fs.readFile(process.env.LISTINGS_JSON, "utf8"));
-  const fields = "id,slug,status,jenis,taman,kawasan,negeri,harga,bilik,bilik_air,keluasan_kps,pegangan,penerangan,gambar,urutan,tarikh_terjual,created_at,updated_at";
-  const url = `${SB_URL}/rest/v1/listings?select=${fields}&status=in.(dijual,terjual)&order=urutan.asc,id.desc`;
+  const url = `${SB_URL}/rest/v1/listings?select=*&status=in.(dijual,terjual)&order=urutan.asc,id.desc`;
   const res = await fetch(url, { headers: { apikey: SB_KEY } });
   if (!res.ok) throw new Error(`Supabase ${res.status}: ${await res.text()}`);
   return res.json();
@@ -117,6 +153,16 @@ table{border-collapse:collapse;font-size:15px;width:100%;max-width:560px}th,td{t
 .foot{background:var(--navy);color:var(--muted-2);font-size:14px;margin-top:40px}.foot .in{display:flex;flex-wrap:wrap;gap:32px;padding:48px 24px 28px;max-width:1200px;margin:0 auto}
 .foot a{color:var(--muted-2)}.foot strong{color:var(--cream)}.foot nav{display:flex;flex-wrap:wrap;gap:8px 16px}
 .legal{border-top:1px solid var(--line);max-width:1200px;margin:0 auto;padding:18px 24px 28px;font-size:13px}
+.meta{font-size:13px;color:var(--ink)}.meta a{color:var(--ink)}
+.box{background:#fff;border:1px solid var(--cl);border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;gap:8px}.box h2{font-size:18px}.box p{font-size:16px;line-height:1.7}
+.pay{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between}.pay div{display:flex;flex-direction:column;gap:4px}.pay b{font:800 28px var(--head)}
+.nota{background:var(--navy);color:var(--cream);border-radius:20px;padding:24px;display:flex;gap:16px;align-items:flex-start}
+.nota img{width:56px;height:56px;border-radius:999px;object-fit:cover;object-position:center top;background:#fff;flex:none}
+.nota h2{font-size:18px;color:var(--accent);margin-bottom:6px}.nota p{color:var(--muted);line-height:1.7;white-space:pre-line}.nota span{display:block;margin-top:8px;font-size:13px;color:var(--muted-2)}
+.near{margin:0;padding-left:20px;line-height:1.9;color:var(--ink)}
+.faq{display:flex;flex-direction:column}.faq details{border-top:1px solid var(--cl);padding:14px 0}.faq details:last-child{border-bottom:1px solid var(--cl)}
+.faq summary{font-weight:600;cursor:pointer}.faq p{margin-top:8px;color:var(--ink)}
+.cap{position:absolute;left:16px;bottom:16px;background:rgba(19,32,58,.82);color:#fff;font-size:13px;padding:6px 12px;border-radius:999px}
 @media (max-width:720px){.agent{position:static;max-width:none}.price{font-size:28px}}
 `;
 
@@ -199,9 +245,11 @@ function listingPage(l, all) {
   const harga = num(l.harga);
   const perKps = l.harga && l.keluasan_kps ? num(Math.round(l.harga / l.keluasan_kps)) : null;
   const specs = [l.bilik != null ? `${l.bilik} bilik` : "", l.bilik_air != null ? `${l.bilik_air} bilik air` : "", l.keluasan_kps != null ? `${num(l.keluasan_kps)} kps` : "", l.pegangan].filter(Boolean);
-  const desc = sold
-    ? `${title} – ${soldWhen(l).toLowerCase()} oleh Zack Ahmad (REN 36121). ${specs.join(", ")}. Nak jual rumah di ${l.kawasan}? Hubungi +6019-607 1970.`
-    : `${title} untuk dijual${harga ? " pada RM " + harga : ""}. ${specs.join(", ")}. Hubungi Zack Ahmad (REN 36121) di +6019-607 1970.`;
+  const summary = (l.ringkasan && l.ringkasan.trim()) || autoSummary(l);
+  const desc = summary.length > 158 ? summary.slice(0, 155).replace(/\s+\S*$/, "") + "…" : summary;
+  const faq = faqFor(l);
+  const caption = (g, i) => (g && g.kapsyen) || `gambar ${i + 1}`;
+  const gam = Array.isArray(l.gambar) ? l.gambar.filter((g) => g && g.url) : [];
   const askText = sold
     ? `Salam Zack, saya nampak ${title} sudah terjual. Ada rumah serupa di ${l.kawasan}?`
     : `Salam Zack, saya berminat dengan ${title} (ID #${l.id}).`;
@@ -218,8 +266,9 @@ function listingPage(l, all) {
         name: title,
         url: SITE + p,
         datePosted: l.created_at || undefined,
+        dateModified: l.updated_at || undefined,
         image: pics.length ? pics : undefined,
-        description: (l.penerangan || desc).slice(0, 500),
+        description: summary,
         offers: {
           "@type": "Offer",
           ...(sold || !l.harga ? {} : { price: Number(l.harga), priceCurrency: "MYR" }),
@@ -233,15 +282,19 @@ function listingPage(l, all) {
           ...(l.bilik_air != null ? { numberOfBathroomsTotal: l.bilik_air } : {}),
           ...(l.keluasan_kps != null ? { floorSize: { "@type": "QuantitativeValue", value: l.keluasan_kps, unitCode: "FTK" } } : {}),
           address: { "@type": "PostalAddress", addressLocality: l.kawasan, addressRegion: l.negeri, addressCountry: "MY" },
+          additionalProperty: [["Keluasan tanah", l.keluasan_tanah], ["Status lot", l.status_lot], ["Pegangan", l.pegangan], ["Arah hadapan", l.arah], ["Keadaan", l.keadaan], ["Perabot", l.perabot],
+            ["Yuran penyelenggaraan (RM/bulan)", l.yuran_penyelenggaraan]].filter(([, v]) => v !== null && v !== undefined && v !== "")
+            .map(([name, value]) => ({ "@type": "PropertyValue", name, value })),
         },
       },
       crumbLd(crumbs),
+      { "@type": "FAQPage", mainEntity: faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) },
     ],
   };
 
   const gallery = pics.length
-    ? `<div class="gallery"><div class="main-ph"><img id="main-img" src="${esc(pics[0])}" alt="${esc(title)} – gambar 1" fetchpriority="high"><span class="tag${sold ? " sold" : ""}">${sold ? "TERJUAL" : "DIJUAL"}</span></div>
-${pics.length > 1 ? `<div class="thumbs" role="list">${pics.map((u, i) => `<button type="button" role="listitem" data-src="${esc(u)}" aria-label="Gambar ${i + 1}" aria-current="${i === 0}"><img src="${esc(u)}" alt="${esc(title)} – gambar ${i + 1}" loading="lazy"></button>`).join("")}</div>` : ""}</div>`
+    ? `<div class="gallery"><figure class="main-ph" style="margin:0"><img id="main-img" src="${esc(gam[0].url)}" alt="${esc(title)} – ${esc(caption(gam[0], 0))}" fetchpriority="high"><span class="tag${sold ? " sold" : ""}">${sold ? "TERJUAL" : "DIJUAL"}</span><figcaption id="main-cap" class="cap"${gam[0].kapsyen ? "" : " hidden"}>${esc(gam[0].kapsyen || "")}</figcaption></figure>
+${gam.length > 1 ? `<div class="thumbs" role="list">${gam.map((g, i) => `<button type="button" role="listitem" data-src="${esc(g.url)}" data-cap="${esc(g.kapsyen || "")}" data-alt="${esc(title)} – ${esc(caption(g, i))}" aria-label="${esc(caption(g, i))}" aria-current="${i === 0}"><img src="${esc(g.url)}" alt="${esc(title)} – ${esc(caption(g, i))}" loading="lazy"></button>`).join("")}</div>` : ""}</div>`
     : `<div class="gallery"><div class="main-ph">Gambar akan dikemas kini<span class="tag${sold ? " sold" : ""}">${sold ? "TERJUAL" : "DIJUAL"}</span></div></div>`;
 
   const facts = [["Bilik", l.bilik], ["Bilik air", l.bilik_air], ["Keluasan", l.keluasan_kps != null ? num(l.keluasan_kps) + " kps" : null], ["Pegangan", l.pegangan]]
@@ -249,7 +302,10 @@ ${pics.length > 1 ? `<div class="thumbs" role="list">${pics.map((u, i) => `<butt
     .map(([k, v]) => `<div class="fact"><span>${k}</span><b>${esc(v)}</b></div>`).join("");
 
   const rows = [["Jenis", l.jenis], ["Taman / projek", l.taman], ["Kawasan", [l.kawasan, l.negeri].filter(Boolean).join(", ")],
-    !sold && perKps ? ["Harga / kps", "RM " + perKps] : null, sold ? ["Status", soldWhen(l)] : null, ["ID listing", "#" + l.id]]
+    !sold && perKps ? ["Harga / kps", "RM " + perKps] : null, l.keluasan_tanah ? ["Keluasan tanah", l.keluasan_tanah] : null,
+    l.status_lot ? ["Status lot", l.status_lot] : null, l.arah ? ["Arah hadapan", l.arah] : null, l.keadaan ? ["Keadaan", l.keadaan] : null,
+    l.perabot ? ["Perabot", l.perabot] : null, l.yuran_penyelenggaraan ? ["Yuran penyelenggaraan", `RM ${num(l.yuran_penyelenggaraan)} / bulan`] : null,
+    sold ? ["Status", soldWhen(l)] : null, ["ID listing", "#" + l.id]]
     .filter(Boolean).map(([k, v]) => `<tr><th scope="row">${k}</th><td>${esc(v)}</td></tr>`).join("");
 
   const body = `<main class="wrap">
@@ -261,10 +317,16 @@ ${gallery}
 <span class="eyebrow">${sold ? "Rekod jualan" : "Rumah dijual"} · ${esc([l.kawasan, l.negeri].filter(Boolean).join(", "))}</span>
 <h1 style="font-weight:800;font-size:clamp(28px,4vw,44px)">${esc(title)}</h1>
 ${sold ? `<span class="price" style="font-size:24px;color:var(--brass)">${esc(soldWhen(l))}</span>` : `<span class="price">${harga ? "RM " + harga : "Harga: hubungi Zack"}</span>`}
+<span class="meta">Diterbitkan <time datetime="${esc(l.created_at || "")}">${fmtDate(l.created_at)}</time> · Dikemas kini <time datetime="${esc(l.updated_at || "")}">${fmtDate(l.updated_at)}</time> · Oleh <a href="/">Zack Ahmad</a>, REN 36121</span>
 </div>
+<section class="box"><h2>Ringkasan</h2><p>${esc(summary)}</p></section>
 ${facts ? `<div class="facts">${facts}</div>` : ""}
+${l.nota_zack && l.nota_zack.trim() ? `<section class="nota"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="56" height="56"><div><h2>Nota Zack</h2><p>${esc(l.nota_zack.trim())}</p><span>Zack Ahmad · Perunding Hartanah Berdaftar REN 36121</span></div></section>` : ""}
 ${l.penerangan ? `<section style="display:flex;flex-direction:column;gap:10px"><h2 style="font-size:22px">Penerangan</h2><p class="desc">${esc(l.penerangan.trim())}</p></section>` : ""}
 <section style="display:flex;flex-direction:column;gap:10px"><h2 style="font-size:22px">Butiran</h2><table><tbody>${rows}</tbody></table></section>
+${lines(l.kemudahan).length ? `<section style="display:flex;flex-direction:column;gap:10px"><h2 style="font-size:22px">Lokasi &amp; kemudahan berdekatan</h2><ul class="near">${lines(l.kemudahan).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
+${!sold && l.harga ? `<section class="box pay"><div><h2>Anggaran bayaran bulanan</h2><b>± RM ${num(monthly(l.harga))} / bulan</b><span class="meta">Pinjaman 90% · 35 tahun · 4.2% setahun. Anggaran sahaja.</span></div><a href="/#kalkulator">Kira sendiri →</a></section>` : ""}
+<section class="faq"><h2 style="font-size:22px">Soalan lazim tentang rumah ini</h2>${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>
 <p><a href="${areaHref}">Lihat semua rumah di ${esc(l.kawasan)} →</a></p>
 </article>
 <aside class="agent" aria-label="Hubungi ejen">
@@ -281,11 +343,11 @@ ${similar.length ? `<section class="section"><h2 style="font-size:26px;font-weig
 </main>`;
 
   const script = pics.length > 1
-    ? `<script>document.querySelectorAll('.thumbs button').forEach(function(b,i){b.addEventListener('click',function(){var m=document.getElementById('main-img');m.src=b.getAttribute('data-src');m.alt=m.alt.replace(/gambar \\d+$/,'gambar '+(i+1));document.querySelectorAll('.thumbs button').forEach(function(x){x.setAttribute('aria-current',String(x===b));});});});</script>`
+    ? `<script>document.querySelectorAll('.thumbs button').forEach(function(b){b.addEventListener('click',function(){var m=document.getElementById('main-img'),c=document.getElementById('main-cap');m.src=b.getAttribute('data-src');m.alt=b.getAttribute('data-alt');c.textContent=b.getAttribute('data-cap');c.hidden=!b.getAttribute('data-cap');document.querySelectorAll('.thumbs button').forEach(function(x){x.setAttribute('aria-current',String(x===b));});});});</script>`
     : "";
 
   return page({
-    title: sold ? `${title} – Terjual | Zack Ahmad, REN 36121` : `${title}${harga ? " – RM " + harga : ""} | Zack Ahmad, REN 36121`,
+    title: sold ? `${title} – Terjual | Zack Ahmad, REN 36121` : `${l.jenis} Untuk Dijual, ${l.taman} ${l.kawasan}${harga ? " – RM " + harga : ""} | Zack Ahmad`,
     desc, canonical: p, image: pics[0], jsonld, body, script,
   });
 }

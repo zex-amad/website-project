@@ -90,6 +90,10 @@ button{cursor:pointer}
 .uploading{font-size:13px;color:var(--brass)}
 .grid{display:flex;flex-wrap:wrap;gap:12px}
 .full{flex-basis:100%}
+.extra{border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.extra summary{font:700 16px var(--head);cursor:pointer}
+.ph-wrap{display:flex;flex-direction:column;gap:4px;width:96px}
+.ph-wrap input{font-size:11px;padding:4px 6px;border:1px solid var(--input);border-radius:6px;width:96px;min-height:28px}
 .chk{background:var(--cream);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .chk label{display:flex;align-items:center;gap:10px;min-height:32px;cursor:pointer}
 .chk input{width:18px;height:18px;accent-color:var(--navy)}
@@ -213,6 +217,22 @@ button{cursor:pointer}
         <div class="field"><label for="e-kps">Keluasan (kps)</label><input id="e-kps" type="number" min="0" inputmode="numeric"></div>
         <div class="field full"><label for="e-penerangan">Penerangan</label><textarea id="e-penerangan" rows="4" placeholder="Ciri utama, keadaan rumah, kemudahan berdekatan…"></textarea></div>
       </div>
+
+      <details class="extra" open>
+        <summary>Butiran tambahan <span class="sub" style="margin:0;font-weight:400">untuk Google &amp; pembeli</span></summary>
+        <p class="sub" id="extra-note" hidden style="margin:8px 0 0;color:#A3261B">Jalankan <code>supabase/migrations/002_butiran_tambahan.sql</code> di Supabase dahulu untuk simpan ruangan ini.</p>
+        <div class="grid" style="margin-top:12px">
+          <div class="field full"><label for="e-ringkasan">Ringkasan <span style="font-weight:400">(kosongkan = dijana automatik)</span></label><textarea id="e-ringkasan" rows="3" placeholder="3–4 ayat: rumah apa, di mana, harga, sesuai untuk siapa"></textarea></div>
+          <div class="field"><label for="e-tanah">Keluasan tanah</label><input id="e-tanah" type="text" placeholder="cth. 22 x 75 kaki"></div>
+          <div class="field"><label for="e-lot">Status lot</label><select id="e-lot"><option value="">—</option><option>Bumi</option><option>Bukan Bumi</option><option>Malay Reserve</option></select></div>
+          <div class="field"><label for="e-arah">Arah hadapan</label><input id="e-arah" type="text" placeholder="cth. Menghadap kawasan lapang"></div>
+          <div class="field"><label for="e-keadaan">Keadaan</label><select id="e-keadaan"><option value="">—</option><option>Asal</option><option>Diubah suai sebahagian</option><option>Diubah suai penuh</option><option>Baru</option></select></div>
+          <div class="field"><label for="e-perabot">Perabot</label><select id="e-perabot"><option value="">—</option><option>Tiada perabot</option><option>Separa perabot</option><option>Berperabot penuh</option></select></div>
+          <div class="field"><label for="e-yuran">Yuran penyelenggaraan (RM/bulan)</label><input id="e-yuran" type="number" min="0" step="0.01" inputmode="decimal" placeholder="Pangsapuri / kondo"></div>
+          <div class="field full"><label for="e-kemudahan">Lokasi &amp; kemudahan <span style="font-weight:400">(satu setiap baris)</span></label><textarea id="e-kemudahan" rows="4" placeholder="Stesen ERL Salak Tinggi – 5 minit&#10;KLIA – 15 minit&#10;SK Salak Tinggi – 3 minit"></textarea></div>
+          <div class="field full"><label for="e-nota">Nota Zack <span style="font-weight:400">(pandangan anda sebagai ejen)</span></label><textarea id="e-nota" rows="4" placeholder="Kenapa rumah ini berbaloi, siapa yang sesuai, apa perlu disemak semasa lawatan"></textarea></div>
+        </div>
+      </details>
 
       <div class="chk">
         <label><input type="checkbox" id="e-tg"> Hantar ke Telegram channel</label>
@@ -413,8 +433,10 @@ button{cursor:pointer}
   }
 
   /* ---------- editor ---------- */
-  var F = { jenis: 'e-jenis', harga: 'e-harga', taman: 'e-taman', kawasan: 'e-kawasan', negeri: 'e-negeri', pegangan: 'e-pegangan', bilik: 'e-bilik', bilik_air: 'e-bilikair', keluasan_kps: 'e-kps', penerangan: 'e-penerangan' };
-  var NUM = { harga: 1, bilik: 1, bilik_air: 1, keluasan_kps: 1 };
+  var F = { jenis: 'e-jenis', harga: 'e-harga', taman: 'e-taman', kawasan: 'e-kawasan', negeri: 'e-negeri', pegangan: 'e-pegangan', bilik: 'e-bilik', bilik_air: 'e-bilikair', keluasan_kps: 'e-kps', penerangan: 'e-penerangan',
+    ringkasan: 'e-ringkasan', keluasan_tanah: 'e-tanah', status_lot: 'e-lot', arah: 'e-arah', keadaan: 'e-keadaan', perabot: 'e-perabot', yuran_penyelenggaraan: 'e-yuran', kemudahan: 'e-kemudahan', nota_zack: 'e-nota' };
+  var NUM = { harga: 1, bilik: 1, bilik_air: 1, keluasan_kps: 1, yuran_penyelenggaraan: 1 };
+  var EXTRA = ['ringkasan', 'keluasan_tanah', 'status_lot', 'arah', 'keadaan', 'perabot', 'yuran_penyelenggaraan', 'kemudahan', 'nota_zack'];
   var editStatus = 'draf';
 
   function renderEditor() {
@@ -428,6 +450,7 @@ button{cursor:pointer}
       editStatus = l.status;
     }
     $('e-id').textContent = 'ID #' + l.id;
+    $('extra-note').hidden = 'ringkasan' in l;
     document.querySelectorAll('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === editStatus)); });
     $('tg-note').textContent = l.telegram_dihantar_pada
       ? 'Sudah dihantar ke Telegram pada ' + new Date(l.telegram_dihantar_pada).toLocaleString('ms-MY') + '.'
@@ -443,6 +466,7 @@ button{cursor:pointer}
   function collect() {
     var l = sel(); var data = {};
     Object.keys(F).forEach(function (k) {
+      if (EXTRA.indexOf(k) !== -1 && !(k in l)) return; // lajur belum wujud di Supabase
       var v = $(F[k]).value;
       data[k] = NUM[k] ? (v === '' ? null : Number(v)) : v.trim();
     });
@@ -541,9 +565,10 @@ button{cursor:pointer}
   /* ---------- photos ---------- */
   function renderPhotos(l) {
     $('photos').innerHTML = (l.gambar || []).map(function (g, i) {
-      return '<div class="ph"><img src="' + esc(g.url) + '" alt="Gambar ' + (i + 1) + '">' +
+      return '<div class="ph-wrap"><div class="ph"><img src="' + esc(g.url) + '" alt="' + esc(g.kapsyen || ('Gambar ' + (i + 1))) + '">' +
         (i === 0 ? '<span class="main">UTAMA</span>' : '<button type="button" class="star" data-main="' + i + '">Utama</button>') +
-        '<button type="button" class="x" data-rm="' + i + '" aria-label="Buang gambar">×</button></div>';
+        '<button type="button" class="x" data-rm="' + i + '" aria-label="Buang gambar">×</button></div>' +
+        '<input type="text" data-cap="' + i + '" value="' + esc(g.kapsyen || '') + '" placeholder="Kapsyen, cth. Dapur" aria-label="Kapsyen gambar ' + (i + 1) + '"></div>';
     }).join('');
   }
   $('photos').addEventListener('click', async function (e) {
@@ -559,6 +584,16 @@ button{cursor:pointer}
       g.unshift(g.splice(k, 1)[0]);
     } else { return; }
     await setPhotos(l, g);
+  });
+  $('photos').addEventListener('change', async function (e) {
+    var inp = e.target.closest('[data-cap]'); if (!inp) return;
+    var l = sel(); if (!l) return;
+    var g = (l.gambar || []).map(function (x) { return Object.assign({}, x); });
+    var i = Number(inp.getAttribute('data-cap'));
+    if (!g[i]) return;
+    g[i].kapsyen = inp.value.trim();
+    await setPhotos(l, g);
+    toast('Kapsyen gambar disimpan.');
   });
   async function setPhotos(l, g) {
     var r = await db.from('listings').update({ gambar: g }).eq('id', l.id).select('gambar').single();
