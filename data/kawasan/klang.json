@@ -1,0 +1,53 @@
+{
+  "kawasan": "Klang",
+  "negeri": "Selangor",
+  "daerah": "Klang",
+  "dikemaskini": "2026-11-24",
+  "ringkasan": "Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang membantu pemilik menjual rumah di Klang dan sekitar Lembah Klang. Dari Bandar Botanic dan Bandar Bukit Tinggi di selatan hingga Bandar Baru Klang dan Bukit Raja di utara, saya bantu anda letakkan harga yang selari dengan pasaran setempat. Matlamat saya: rumah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi. Menang-menang untuk kedua-dua pihak.",
+  "tentang": {
+    "tajuk": "Tentang Klang",
+    "perenggan": [
+      "Klang ialah bandar diraja Selangor dan bekas ibu negeri. Ia diisytiharkan Bandaraya Diraja Klang pada 5 Februari 2024 dan kini ditadbir oleh Majlis Bandaraya Diraja Klang (MBDK). Istana Alam Shah terletak di sini.",
+      "Selatan Klang merangkumi Bandar Botanic, Bandar Bukit Tinggi, Taman Sri Andalas dan Kota Bayuemas, manakala utara pula Bandar Baru Klang, Bandar Bukit Raja dan Aman Perdana. Pelabuhan Klang, kawasan perindustrian dan LRT Laluan Shah Alam yang baharu menyokong permintaan rumah keluarga dan sewaan."
+    ]
+  },
+  "taman": [
+    "Bandar Botanic",
+    "Bandar Bukit Tinggi",
+    "Taman Sri Andalas",
+    "Taman Sentosa",
+    "Kota Bayuemas",
+    "Glenmarie Cove",
+    "Bandar Baru Klang",
+    "Bandar Bukit Raja",
+    "Aman Perdana",
+    "Taman Klang Utama",
+    "Meru",
+    "Kapar"
+  ],
+  "pengangkutan": [
+    "KTM Komuter Laluan Pelabuhan Klang: Bukit Badak, Kampung Raja Uda, Klang, Teluk Pulai, Teluk Gadong, Pelabuhan Klang",
+    "LRT Laluan Shah Alam (sejak akhir Jun 2026): Bandar Baru Klang, Pasar Klang, Jalan Meru, Jambatan Kota, Taman Selatan, Seri Andalas, Klang Jaya, Bandar Bukit Tinggi, Johan Setia",
+    "Lebuh raya: Persekutuan, NKVE, SKVE, KESAS, Pintasan Selat Klang Utara, WCE"
+  ],
+  "pendidikan": [
+    "Kolej Komuniti Klang, Kolej Vokasional Klang, Kolej Islam Sultan Alam Shah",
+    "SMK Raja Mahadi, SMK Tengku Ampuan Rahimah, SMK Sultan Abdul Samad, SMK Bukit Tinggi",
+    "Sri KDU International School Klang"
+  ],
+  "kemudahan": [
+    "Hospital Tengku Ampuan Rahimah, KPJ Klang, Columbia Asia Bukit Raja, Bukit Tinggi Medical Centre",
+    "AEON Bukit Tinggi, AEON Bukit Raja, KSL Esplanade, Klang Parade",
+    "Istana Alam Shah, Masjid Diraja Sultan Sulaiman, Little India Klang"
+  ],
+  "sumber": [
+    [
+      "Klang (bandar) – Wikipedia",
+      "https://en.wikipedia.org/wiki/Klang_(city)"
+    ],
+    [
+      "LRT Laluan Shah Alam beroperasi sepenuhnya – The Star",
+      "https://www.thestar.com.my/news/nation/2026/06/23/shah-alam-lrt-line-to-be-fully-operational-next-monday"
+    ]
+  ]
+}

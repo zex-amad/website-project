@@ -101,10 +101,17 @@ async function copyDir(src, dst) {
 let REVIEWS = null;
 const GUIDES = new Map(); // panduan kawasan: data/kawasan/{slug-kawasan}.json
 try {
+  // _asas.json: bahagian servis/proses/FAQ yang sama untuk semua kawasan ({kawasan} diganti nama kawasan).
+  // Fail kawasan hanya perlu maklumat khusus kawasan; apa-apa medan dalam fail kawasan mengatasi asas.
+  let ASAS = {};
+  try { ASAS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", "_asas.json"), "utf8")); } catch { /* tiada asas */ }
+  const fill = (v, k) => JSON.parse(JSON.stringify(v).replaceAll("{kawasan}", k.replace(/["\\]/g, "")));
   for (const f of await fs.readdir(path.join(ROOT, "data", "kawasan"))) {
-    if (!f.endsWith(".json")) continue;
+    if (!f.endsWith(".json") || f.startsWith("_")) continue;
     const g = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", f), "utf8"));
-    GUIDES.set(slugify(g.kawasan), g);
+    const merged = { ...fill(ASAS, g.kawasan), ...g };
+    if (g.faq_tambahan) merged.faq = [...g.faq_tambahan, ...(merged.faq || [])];
+    GUIDES.set(slugify(g.kawasan), merged);
   }
 } catch { /* tiada panduan */ }
 export const INDEXNOW_KEY = "d79b637a3c99c35e28393fa9726a879a";

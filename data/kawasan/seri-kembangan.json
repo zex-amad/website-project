@@ -1,0 +1,47 @@
+{
+  "kawasan": "Seri Kembangan",
+  "negeri": "Selangor",
+  "daerah": "Petaling",
+  "dikemaskini": "2026-11-24",
+  "ringkasan": "Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang membantu pemilik menjual rumah di Seri Kembangan dan sekitar Lembah Klang. Seri Kembangan berada di antara Kuala Lumpur dan Putrajaya, dan MRT Laluan Putrajaya telah mengubah cara pembeli menilai taman-taman di sini. Matlamat saya: rumah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi. Menang-menang untuk kedua-dua pihak.",
+  "tentang": {
+    "tajuk": "Tentang Seri Kembangan",
+    "perenggan": [
+      "Seri Kembangan, dahulunya dikenali sebagai Kampung Baru Serdang, terletak di Daerah Petaling di antara Kuala Lumpur dan Putrajaya, di bawah Majlis Bandaraya Subang Jaya (MBSJ). Ia menjadi pintu masuk selatan ke Kuala Lumpur bagi pemandu dari selatan.",
+      "MRT Laluan Putrajaya (dibuka 16 Mac 2023) mempunyai enam stesen di Seri Kembangan, dan UPM terletak di sini. Kawasan seperti The Mines, Taman Equine dan Serdang Jaya diminati keluarga, pelajar dan pekerja yang berulang-alik ke Kuala Lumpur, Putrajaya dan Cyberjaya."
+    ]
+  },
+  "taman": [
+    "Seri Kembangan (pekan)",
+    "Serdang Jaya",
+    "Serdang Raya",
+    "Taman Universiti Indah",
+    "Taman Equine",
+    "Bandar Putra Permai",
+    "The Mines Resort City",
+    "Taman Sungai Besi Indah",
+    "Desa Serdang",
+    "Taman Muhibbah"
+  ],
+  "pengangkutan": [
+    "MRT Laluan Putrajaya: Serdang Raya Utara, Serdang Raya Selatan, Serdang Jaya, UPM, Taman Equine, Putra Permai",
+    "KTM Komuter: stesen Serdang",
+    "Lebuh raya: PLUS (Utara–Selatan), Lebuhraya Sungai Besi, SKVE, LDP, MEX"
+  ],
+  "pendidikan": [
+    "Universiti Putra Malaysia (UPM)",
+    "SMK Seri Kembangan, SMK Seri Serdang, SK Taman Universiti",
+    "Alice Smith School (kampus menengah), Australian International School Malaysia, Kingsgate International School"
+  ],
+  "kemudahan": [
+    "Hospital Serdang",
+    "The Mines Shopping Mall, AEON Taman Equine, South City Plaza",
+    "Pasar Borong Selangor, pasar malam Seri Kembangan"
+  ],
+  "sumber": [
+    [
+      "Seri Kembangan – Wikipedia",
+      "https://en.wikipedia.org/wiki/Seri_Kembangan"
+    ]
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "kawasan": "Kajang",
+  "negeri": "Selangor",
+  "daerah": "Hulu Langat",
+  "dikemaskini": "2026-11-24",
+  "ringkasan": "Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang membantu pemilik menjual rumah di Kajang dan sekitar Lembah Klang. Dari pusat bandar lama hingga Sungai Chua, Saujana Impian dan Bandar Sungai Long, saya bantu anda kaji nilai bank dan harga pasaran ikut taman. Matlamat saya: rumah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi. Menang-menang untuk kedua-dua pihak.",
+  "tentang": {
+    "tajuk": "Tentang Kajang",
+    "perenggan": [
+      "Kajang ialah bandar utama Daerah Hulu Langat dan ditadbir oleh Majlis Perbandaran Kajang (MPKj). Menurut Banci 2020, kawasan pihak berkuasa tempatannya didiami kira-kira 1.05 juta orang. Kajang juga terkenal sebagai Bandar Sate.",
+      "Kawasan perumahan berkembang ke Sungai Chua, Taman Prima Saujana, Saujana Impian, Bandar Sungai Long, Kajang Prima dan Bandar Teknologi Kajang. Stesen Kajang yang menggabungkan MRT, KTM Komuter dan ETS menjadikan Kajang mudah dihubungi dari Kuala Lumpur dan selatan."
+    ]
+  },
+  "taman": [
+    "Sungai Chua",
+    "Taman Prima Saujana",
+    "Taman Kajang Perdana",
+    "Saujana Impian",
+    "Bandar Sungai Long",
+    "Kajang Prima",
+    "Bandar Teknologi Kajang",
+    "Taman Sri Ramal",
+    "Taman Bukit Mewah",
+    "Hillpark",
+    "Jade Hills",
+    "Country Heights"
+  ],
+  "pengangkutan": [
+    "Stesen Kajang: MRT Laluan Kajang (hentian akhir), KTM Komuter dan KTM ETS",
+    "MRT Laluan Kajang: Stadium Kajang, Sungai Jernih, Bukit Dukung",
+    "Lebuh raya: SILK, Cheras–Kajang (Grand Saga), Kajang–Seremban, PLUS (Persimpangan Kajang)"
+  ],
+  "pendidikan": [
+    "UTAR Kampus Sungai Long, UNITEN, New Era University College",
+    "Infrastructure University Kuala Lumpur, German-Malaysian Institute",
+    "SMK Tinggi Kajang, SMJK Yu Hua, SMK Sultan Abdul Aziz Shah, SMK Saujana Impian"
+  ],
+  "kemudahan": [
+    "Hospital Kajang, KPJ Kajang Specialist Hospital",
+    "Plaza Metro Kajang, Metro Point, Billion Shopping Centre",
+    "Pusat bandar warisan di Jalan Mendaling dan Stadium Kajang"
+  ],
+  "sumber": [
+    [
+      "Kajang – Wikipedia",
+      "https://en.wikipedia.org/wiki/Kajang"
+    ]
+  ]
+}

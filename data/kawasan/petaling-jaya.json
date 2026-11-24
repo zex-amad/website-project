@@ -1,0 +1,56 @@
+{
+  "kawasan": "Petaling Jaya",
+  "negeri": "Selangor",
+  "daerah": "Petaling",
+  "dikemaskini": "2026-11-24",
+  "ringkasan": "Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang membantu pemilik menjual rumah di Petaling Jaya dan sekitar Lembah Klang. Dari rumah lama di Seksyen 1 hingga 17 sampai kawasan matang seperti SS2, Damansara Jaya dan Bandar Utama, pembeli PJ biasanya teliti tentang lokasi dan akses ke stesen. Matlamat saya: rumah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi. Menang-menang untuk kedua-dua pihak.",
+  "tentang": {
+    "tajuk": "Tentang Petaling Jaya",
+    "perenggan": [
+      "Petaling Jaya (PJ) dibangunkan pada 1950-an sebagai bandar satelit Kuala Lumpur dan menerima status bandar raya pada 20 Jun 2006. Ia ditadbir oleh Majlis Bandaraya Petaling Jaya (MBPJ), dengan penduduk 771,687 orang menurut Banci 2020.",
+      "PJ merangkumi kawasan lama berseksyen (Seksyen 1 hingga 52), kejiranan SS seperti SS2 dan Kelana Jaya, serta kawasan Damansara di utara seperti Damansara Utama, Bandar Utama, Mutiara Damansara, Ara Damansara dan Kota Damansara. Kedudukannya bersebelahan Kuala Lumpur dan rangkaian rel yang padat menjadikan rumah di sini kekal dicari."
+    ]
+  },
+  "taman": [
+    "Seksyen 14",
+    "Seksyen 17",
+    "PJ Old Town (Seksyen 1–4)",
+    "SS2",
+    "Kelana Jaya (SS3–SS7)",
+    "Damansara Jaya",
+    "Damansara Utama",
+    "Bandar Utama",
+    "Ara Damansara",
+    "Mutiara Damansara",
+    "Taman Paramount",
+    "Bukit Gasing"
+  ],
+  "pengangkutan": [
+    "LRT Laluan Kelana Jaya: Taman Jaya, Asia Jaya, Taman Paramount, Taman Bahagia, Kelana Jaya, Lembah Subang, Ara Damansara",
+    "MRT Laluan Kajang: Bandar Utama, Mutiara Damansara, Surian, Kota Damansara",
+    "LRT Laluan Shah Alam (sejak akhir Jun 2026): Bandar Utama, Kayu Ara, BU 11, Damansara Idaman",
+    "KTM Komuter: Petaling, Jalan Templer, Kampung Dato Harun, Seri Setia, Setia Jaya",
+    "Lebuh raya: Persekutuan, LDP, SPRINT, NKVE"
+  ],
+  "pendidikan": [
+    "UNITAR (Kelana Jaya), MUST (SS7), City University (Seksyen 51A)",
+    "SEGi University (Kota Damansara)",
+    "SMK Taman SEA, SMK Damansara Utama, SMK (P) Assunta, SMK (L) La Salle",
+    "German School Kuala Lumpur"
+  ],
+  "kemudahan": [
+    "Assunta Hospital, Hospital Mata Tun Hussein Onn",
+    "1 Utama, The Curve, IPC, Paradigm Mall, Jaya One, Jaya Shopping Centre",
+    "Taman Rimba Komuniti Kota Damansara, Muzium Petaling Jaya"
+  ],
+  "sumber": [
+    [
+      "Petaling Jaya – Wikipedia",
+      "https://en.wikipedia.org/wiki/Petaling_Jaya"
+    ],
+    [
+      "LRT Laluan Shah Alam beroperasi sepenuhnya – The Star",
+      "https://www.thestar.com.my/news/nation/2026/06/23/shah-alam-lrt-line-to-be-fully-operational-next-monday"
+    ]
+  ]
+}

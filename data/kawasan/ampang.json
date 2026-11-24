@@ -1,0 +1,48 @@
+{
+  "kawasan": "Ampang",
+  "negeri": "Selangor",
+  "daerah": "Hulu Langat & Gombak",
+  "dikemaskini": "2026-11-24",
+  "ringkasan": "Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang membantu pemilik menjual rumah di Ampang dan sekitar Lembah Klang. Ampang ada pilihan dari rumah teres di Pandan Indah hingga rumah di lereng bukit Taman Melawati dan Bukit Antarabangsa, dan setiap satu memerlukan strategi harga sendiri. Matlamat saya: rumah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi. Menang-menang untuk kedua-dua pihak.",
+  "tentang": {
+    "tajuk": "Tentang Ampang",
+    "perenggan": [
+      "Ampang Jaya, atau ringkasnya Ampang, terletak di luar sempadan timur Kuala Lumpur dan merentasi Daerah Hulu Langat dan Gombak. Ia ditadbir oleh Majlis Perbandaran Ampang Jaya (MPAJ) sejak 1992, dengan penduduk 781,089 orang (2020).",
+      "Kawasan perumahannya merangkumi Pandan Indah, Pandan Jaya, Taman Melawati, Taman Dagang, Bandar Baru Ampang, Hulu Kelang dan Bukit Antarabangsa. LRT Laluan Ampang serta lebuh raya MRR2 dan AKLEH memberi akses terus ke pusat bandar Kuala Lumpur."
+    ]
+  },
+  "taman": [
+    "Pandan Indah",
+    "Pandan Jaya",
+    "Pandan Perdana",
+    "Taman Melawati",
+    "Taman Muda",
+    "Taman Dagang",
+    "Bandar Baru Ampang",
+    "Taman Kosas",
+    "Taman Bukit Indah",
+    "Bukit Antarabangsa",
+    "Lembah Jaya",
+    "Hulu Kelang"
+  ],
+  "pengangkutan": [
+    "LRT Laluan Ampang: Ampang (hentian akhir), Cahaya, Cempaka, Pandan Indah, Pandan Jaya",
+    "Lebuh raya: MRR2, AKLEH, sambungan Besraya; Jalan Ampang ke pusat bandar KL"
+  ],
+  "pendidikan": [
+    "USIM Kampus Ampang (Pandan Indah)",
+    "Kolej Komuniti Ampang",
+    "Sekolah kebangsaan dan jenis kebangsaan di Ampang, Pandan dan Hulu Kelang"
+  ],
+  "kemudahan": [
+    "Hospital Ampang",
+    "Pusat komersial Ampang Point, Pandan Indah dan Taman Melawati",
+    "Empangan Klang Gates"
+  ],
+  "sumber": [
+    [
+      "Ampang Jaya – Wikipedia",
+      "https://en.wikipedia.org/wiki/Ampang_Jaya"
+    ]
+  ]
+}
