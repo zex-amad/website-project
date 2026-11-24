@@ -183,6 +183,10 @@ button{cursor:pointer}
           <button type="button" data-s="dijual" aria-pressed="false">Dijual</button>
           <button type="button" data-s="terjual" aria-pressed="false">Terjual</button>
         </div>
+        <div class="grid" id="sold-when" hidden style="margin-top:12px">
+          <div class="field"><label for="e-sold-m">Bulan terjual</label><select id="e-sold-m"></select></div>
+          <div class="field"><label for="e-sold-y">Tahun terjual</label><select id="e-sold-y"></select></div>
+        </div>
       </div>
 
       <div style="display:flex;flex-direction:column;gap:8px">
@@ -487,6 +491,17 @@ button{cursor:pointer}
   var NUM = { harga: 1, bilik: 1, bilik_air: 1, keluasan_kps: 1, yuran_penyelenggaraan: 1 };
   var EXTRA = ['ringkasan', 'keluasan_tanah', 'status_lot', 'arah', 'keadaan', 'perabot', 'yuran_penyelenggaraan', 'kemudahan', 'nota_zack'];
   var editStatus = 'draf';
+  var BULAN_ADMIN = ['Januari','Februari','Mac','April','Mei','Jun','Julai','Ogos','September','Oktober','November','Disember'];
+  (function () {
+    var m = $('e-sold-m'), y = $('e-sold-y'), now = new Date().getFullYear();
+    BULAN_ADMIN.forEach(function (b, i) { var o = document.createElement('option'); o.value = String(i + 1).padStart(2, '0'); o.textContent = b; m.appendChild(o); });
+    for (var t = now; t >= 2015; t--) { var o = document.createElement('option'); o.value = String(t); o.textContent = String(t); y.appendChild(o); }
+  })();
+  function setSoldWhen(d) {
+    var x = d ? String(d) : new Date().toISOString().slice(0, 10);
+    $('e-sold-y').value = x.slice(0, 4); $('e-sold-m').value = x.slice(5, 7);
+    if (!$('e-sold-y').value) { var o = document.createElement('option'); o.value = o.textContent = x.slice(0, 4); $('e-sold-y').appendChild(o); $('e-sold-y').value = x.slice(0, 4); }
+  }
 
   function renderEditor() {
     var l = sel();
@@ -497,7 +512,9 @@ button{cursor:pointer}
       Object.keys(F).forEach(function (k) { $(F[k]).value = l[k] == null ? '' : l[k]; });
       $('e-tg').checked = !!l.hantar_telegram; $('e-crm').checked = !!l.kongsi_crm;
       editStatus = l.status;
+      setSoldWhen(l.tarikh_terjual);
     }
+    $('sold-when').hidden = editStatus !== 'terjual';
     $('e-id').textContent = 'ID #' + l.id;
     $('extra-note').hidden = 'ringkasan' in l;
     document.querySelectorAll('#seg button').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-s') === editStatus)); });
@@ -528,7 +545,7 @@ button{cursor:pointer}
     var l = sel(); if (!l) return;
     var data = collect();
     data.status = status;
-    if (status === 'terjual' && !l.tarikh_terjual) data.tarikh_terjual = new Date().toISOString().slice(0, 10);
+    if (status === 'terjual') data.tarikh_terjual = $('e-sold-y').value + '-' + $('e-sold-m').value + '-01';
     if (status !== 'terjual') data.tarikh_terjual = null;
     if (status !== 'draf' && (!data.taman || !data.kawasan || data.harga === null)) {
       toast('Isi sekurang-kurangnya Taman, Kawasan dan Harga sebelum terbitkan.', true); return;
