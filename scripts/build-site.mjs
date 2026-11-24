@@ -695,6 +695,11 @@ async function main() {
     for (const a of ARTICLES) {
       await write(path.join(articlePath(a), "index.html"), articlePage(a));
       urls.push({ loc: articlePath(a), lastmod: a.kemaskini || a.tarikh, pri: "0.7" });
+      // Pautan lama (slug_lama: a, b) -> redirect ke pautan baru
+      for (const old of String(a.slug_lama || "").split(",").map((x) => x.trim()).filter(Boolean)) {
+        const to = `${SITE}${articlePath(a)}`;
+        await write(path.join("panduan", old, "index.html"), `<!doctype html><html lang="ms"><head><meta charset="utf-8"><title>${esc(a.tajuk)}</title><link rel="canonical" href="${to}"><meta name="robots" content="noindex,follow"><meta http-equiv="refresh" content="0; url=${articlePath(a)}"><script>location.replace(${JSON.stringify(articlePath(a))}+location.hash)</script></head><body><p>Artikel ini telah dipindahkan ke <a href="${articlePath(a)}">${esc(a.tajuk)}</a>.</p></body></html>`);
+      }
     }
   }
 
