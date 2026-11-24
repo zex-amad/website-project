@@ -172,6 +172,23 @@ table{border-collapse:collapse;font-size:15px;width:100%;max-width:560px}th,td{t
 .faq{display:flex;flex-direction:column}.faq details{border-top:1px solid var(--cl);padding:14px 0}.faq details:last-child{border-bottom:1px solid var(--cl)}
 .faq summary{font-weight:600;cursor:pointer}.faq p{margin-top:8px;color:var(--ink)}
 .cap{position:absolute;left:16px;bottom:16px;background:rgba(19,32,58,.82);color:#fff;font-size:13px;padding:6px 12px;border-radius:999px}
+.band{padding:64px 0}.band.tight{padding:0 0 64px}.band.dark{background:var(--navy);color:var(--cream)}.band.white{background:#fff}
+.band-in{display:flex;flex-direction:column;gap:22px}
+.g-hero{display:flex;flex-wrap:wrap;gap:40px;align-items:center;padding-bottom:16px}.g-hero-text{flex:1.5 1 480px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.g-h1{font-weight:800;font-size:clamp(32px,4.6vw,56px);line-height:1.08}
+.g-photo{flex:1 1 260px;max-width:360px;aspect-ratio:4/5;border-radius:24px;overflow:hidden;background:#fff}.g-photo img{width:100%;height:100%;object-fit:cover;object-position:center top}
+.row-btns{display:flex;flex-wrap:wrap;gap:12px}
+.g-h2{font-weight:800;font-size:clamp(26px,3.4vw,40px);line-height:1.15}
+.g-p{font-size:17px;line-height:1.75;color:var(--ink);max-width:820px}
+.g-cards{display:flex;flex-wrap:wrap;gap:20px}.g-card{flex:1 1 340px;background:#fff;border:1px solid var(--cl);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:10px}.g-card h3{font-size:22px;font-weight:800}.g-card p{color:var(--ink);line-height:1.7}
+.g-reasons{display:flex;flex-wrap:wrap;gap:28px}.g-reasons>div{flex:1 1 300px;border-top:2px solid var(--accent);padding-top:18px;display:flex;flex-direction:column;gap:8px}
+.g-reasons b{font:800 15px var(--head);color:var(--accent)}.g-reasons h3{font-size:21px;font-weight:800}.g-reasons p{color:var(--muted);line-height:1.7}
+.g-work{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:14px}.g-work li{flex:1 1 340px;background:#fff;border:1px solid var(--cl);border-radius:16px;padding:20px;display:flex;gap:14px}
+.g-work b{font:800 18px var(--head);color:var(--brass);min-width:28px}.g-work strong{display:block;font:700 17px var(--head);margin-bottom:4px}.g-work span{font-size:15px;line-height:1.6;color:var(--ink)}
+.g-cta{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:20px;padding:32px}.g-cta>div{flex:1 1 420px;display:flex;flex-direction:column;gap:6px}
+.g-steps{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:20px}.g-steps li{flex:1 1 200px;border-top:2px solid var(--brass);padding-top:18px;display:flex;flex-direction:column;gap:6px}
+.g-steps b{font:800 15px var(--head);color:var(--brass)}.g-steps strong{font:700 18px var(--head)}.g-steps span{font-size:15px;line-height:1.6;color:var(--ink)}
+.g-cols{display:flex;flex-wrap:wrap;gap:32px}.g-cols>div{flex:1 1 300px;display:flex;flex-direction:column;gap:8px}.g-cols h3{font-size:19px;font-weight:800}
 @media (max-width:720px){.agent{position:static;max-width:none}.price{font-size:28px}}
 `;
 
@@ -394,42 +411,84 @@ function areaChips(dijual) {
 function guidePage(g, href, d, t) {
   const crumbs = [["Utama", "/"], ["Rumah Dijual", "/rumah-dijual/"], [g.negeri, "/rumah-dijual/"], [g.kawasan, href]];
   const ul = (xs) => `<ul class="near">${(xs || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>`;
-  const block = (title, inner) => `<section class="section"><h2 style="font-size:26px;font-weight:800">${title}</h2>${inner}</section>`;
+  const band = (inner, cls = "") => `<section class="band ${cls}"><div class="wrap band-in">${inner}</div></section>`;
+  const eb = (x) => `<span class="eyebrow">${x}</span>`;
+  const h2 = (x) => `<h2 class="g-h2">${x}</h2>`;
+  const para = (xs) => (xs || []).map((x) => `<p class="g-p">${esc(x)}</p>`).join("");
   const updated = g.dikemaskini ? fmtDate(g.dikemaskini) : "";
-  const body = `<section style="background:var(--navy);color:var(--cream)"><div class="wrap" style="padding-bottom:48px">
+  const sellWa = waLink(`Salam Zack, saya nak jual rumah di ${g.kawasan}. Boleh bantu kaji harga?`);
+  const askWa = waLink(`Salam Zack, saya nak tahu harga munasabah untuk rumah saya di ${g.kawasan}. Taman: `);
+
+  const hero = `<section class="band dark"><div class="wrap g-hero">
+<div class="g-hero-text">
 ${crumbHtml(crumbs).replace('class="crumb"', 'class="crumb" style="color:var(--muted-2)"').replace(/<a /g, '<a style="color:var(--muted-2)" ')}
-<div style="display:flex;flex-direction:column;gap:16px;max-width:820px;padding-top:12px">
-<span class="eyebrow" style="color:var(--accent)">Panduan kawasan · Daerah ${esc(g.daerah || "")}</span>
-<h1 style="font-weight:800;font-size:clamp(34px,5vw,58px)">Rumah untuk dijual di ${esc(g.kawasan)}</h1>
+<span class="eyebrow" style="color:var(--accent)">${esc(g.eyebrow || "Panduan kawasan")}</span>
+<h1 class="g-h1">${esc(g.h1 || `Rumah untuk dijual di ${g.kawasan}`)}</h1>
 <p style="font-size:18px;line-height:1.7;color:var(--muted)">${esc(g.ringkasan)}</p>
+<div class="row-btns"><a class="btn btn-accent" href="${sellWa}" target="_blank" rel="noopener">${esc(g.cta_utama || "WhatsApp Zack")}</a><a class="btn btn-ghost" href="#senarai">Lihat rumah dijual</a></div>
 <div class="chips">${(g.sorotan || []).map((x) => `<span class="chip" style="background:transparent;color:var(--cream);border-color:var(--line)">${esc(x)}</span>`).join("")}</div>
 <span class="meta" style="color:var(--muted-2)">${updated ? `Dikemas kini <time datetime="${esc(g.dikemaskini)}">${updated}</time> · ` : ""}Oleh <a href="/" style="color:var(--muted-2)">Zack Ahmad</a>, REN 36121</span>
-</div></div></section>
-<main class="wrap">
-${block(`Rumah dijual di ${esc(g.kawasan)}`, d.length ? `<div class="cards">${d.map(card).join("")}</div>` : `<p class="empty">Tiada listing aktif di ${esc(g.kawasan)} buat masa ini. <a href="${waLink(`Salam Zack, saya cari rumah di ${g.kawasan}.`)}">WhatsApp Zack, saya bantu carikan →</a></p>`)}
-${block(`Kenapa ${esc(g.kawasan)}`, (g.pengenalan || []).map((p) => `<p style="font-size:17px;line-height:1.75;color:var(--ink);max-width:820px">${esc(p)}</p>`).join(""))}
-${g.taman && g.taman.length ? block("Taman &amp; kawasan perumahan popular", `<div class="chips">${g.taman.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>`) : ""}
-<div style="display:flex;flex-wrap:wrap;gap:0 40px">
-${g.pengangkutan && g.pengangkutan.length ? `<div style="flex:1 1 340px">${block("Pengangkutan", ul(g.pengangkutan))}</div>` : ""}
-${g.pendidikan && g.pendidikan.length ? `<div style="flex:1 1 340px">${block("Sekolah &amp; universiti", ul(g.pendidikan))}</div>` : ""}
 </div>
-${g.kemudahan && g.kemudahan.length ? block("Kemudahan &amp; tarikan berdekatan", ul(g.kemudahan)) : ""}
-${g.harga ? `<section class="section"><div class="box"><h2 style="font-size:24px">Harga pasaran rumah di ${esc(g.kawasan)}</h2><p>${esc(g.harga.teks)}</p>${g.harga.sumber_url ? `<span class="meta">Sumber: <a href="${esc(g.harga.sumber_url)}" rel="nofollow noopener" target="_blank">${esc(g.harga.sumber_nama)}</a></span>` : ""}</div></section>` : ""}
-${g.nota_zack ? `<section class="section"><div class="nota"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="56" height="56"><div><h2>Nota Zack tentang ${esc(g.kawasan)}</h2><p>${esc(g.nota_zack)}</p><span>Zack Ahmad · Perunding Hartanah Berdaftar REN 36121</span></div></div></section>` : ""}
-${g.faq && g.faq.length ? `<section class="section faq"><h2 style="font-size:26px;font-weight:800">Soalan lazim tentang ${esc(g.kawasan)}</h2><div>${g.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</div></section>` : ""}
-${t.length ? block(`Rekod jualan di ${esc(g.kawasan)}`, `<div class="cards">${t.slice(0, 6).map(card).join("")}</div>`) : ""}
-<section class="section" style="gap:10px"><div class="box" style="flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:space-between"><div><h2 style="font-size:22px">Nak beli atau jual rumah di ${esc(g.kawasan)}?</h2><p class="meta" style="font-size:15px">Zack Ahmad · Perunding Hartanah Berdaftar REN 36121 · hampir 10 tahun pengalaman</p></div><a class="btn btn-navy" href="${waLink(`Salam Zack, saya nak tanya tentang rumah di ${g.kawasan}.`)}" target="_blank" rel="noopener">WhatsApp Zack</a></div></section>
-${g.sumber && g.sumber.length ? `<section class="section" style="font-size:13px;color:var(--ink);gap:6px"><strong>Sumber</strong><ul style="margin:0;padding-left:18px;line-height:1.8">${g.sumber.map(([n, u]) => `<li><a href="${esc(u)}" rel="nofollow noopener" target="_blank">${esc(n)}</a></li>`).join("")}</ul></section>` : ""}
-</main>`;
+<div class="g-photo"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad, perunding hartanah berdaftar ${esc(g.kawasan)}" width="360" height="450" fetchpriority="high"></div>
+</div></section>`;
+
+  const m = g.matlamat;
+  const matlamat = m ? band(eb("Matlamat") + h2(esc(m.tajuk)) + para(m.perenggan)) : "";
+
+  const k = g.kajian_harga;
+  const kajian = k ? band(eb("Langkah pertama") + h2(esc(k.tajuk)) + `<p class="g-p">${esc(k.pengenalan)}</p>` +
+    `<div class="g-cards">${k.perkara.map(([a, b]) => `<div class="g-card"><h3>${esc(a)}</h3><p>${esc(b)}</p></div>`).join("")}</div>` +
+    `<p class="g-p" style="color:var(--navy);font-weight:600">${esc(k.penutup)}</p>`, "tight") : "";
+
+  const hk = g.harga_kompetitif;
+  const kompetitif = hk ? band(`<span class="eyebrow" style="color:var(--accent)">Strategi harga</span>` + `<h2 class="g-h2" style="color:var(--cream)">${esc(hk.tajuk)}</h2>` +
+    `<p class="g-p" style="color:var(--muted)">${esc(hk.pengenalan)}</p>` +
+    `<div class="g-reasons">${hk.sebab.map(([a, b], i) => `<div><b>0${i + 1}</b><h3>${esc(a)}</h3><p>${esc(b)}</p></div>`).join("")}</div>`, "dark") : "";
+
+  const kj = g.kerja;
+  const kerja = kj ? band(eb("Servis lengkap") + h2(esc(kj.tajuk)) +
+    `<ol class="g-work">${kj.senarai.map(([a, b], i) => `<li><b>${String(i + 1).padStart(2, "0")}</b><div><strong>${esc(a)}</strong><span>${esc(b)}</span></div></li>`).join("")}</ol>`) : "";
+
+  const cta = band(`<div class="box g-cta"><div><h2 style="font-size:28px;font-weight:800">Nak tahu harga munasabah untuk rumah anda di ${esc(g.kawasan)}?</h2><p class="meta" style="font-size:16px">WhatsApp saya nama taman dan jenis rumah. Saya akan kongsi gambaran nilai bank dan harga pasaran semasa.</p></div><a class="btn btn-navy" href="${askWa}" target="_blank" rel="noopener">WhatsApp Zack</a></div>`, "tight");
+
+  const proses = g.proses ? band(eb("Proses") + h2("Proses jual rumah bersama saya") +
+    `<ol class="g-steps">${g.proses.map(([a, b], i) => `<li><b>0${i + 1}</b><strong>${esc(a)}</strong><span>${esc(b)}</span></li>`).join("")}</ol>`, "white") : "";
+
+  const listings = `<section class="band" id="senarai"><div class="wrap band-in">${eb("Senarai semasa")}${h2(`Rumah dijual di ${esc(g.kawasan)}`)}
+${d.length ? `<div class="cards">${d.map(card).join("")}</div>` : `<p class="empty">Tiada listing aktif di ${esc(g.kawasan)} buat masa ini. <a href="${waLink(`Salam Zack, saya cari rumah di ${g.kawasan}.`)}">WhatsApp Zack, saya bantu carikan →</a></p>`}
+${t.length ? `<h3 style="font:800 22px var(--head);margin-top:12px">Rekod jualan di ${esc(g.kawasan)}</h3><div class="cards">${t.slice(0, 6).map(card).join("")}</div>` : ""}
+${g.pembeli ? `<div class="nota" style="margin-top:8px"><div><h2>Untuk pembeli</h2><p>${esc(g.pembeli)}</p></div></div>` : ""}
+</div></section>`;
+
+  const harga = (g.harga || g.nota_zack) ? band(
+    (g.harga ? `<div class="box"><h2 style="font-size:24px">Gambaran harga pasaran di ${esc(g.kawasan)}</h2><p>${esc(g.harga.teks)}</p>${g.harga.sumber_url ? `<span class="meta">Sumber: <a href="${esc(g.harga.sumber_url)}" rel="nofollow noopener" target="_blank">${esc(g.harga.sumber_nama)}</a></span>` : ""}</div>` : "") +
+    (g.nota_zack ? `<div class="nota"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="56" height="56"><div><h2>Nota Zack tentang ${esc(g.kawasan)}</h2><p>${esc(g.nota_zack)}</p><span>Zack Ahmad · Perunding Hartanah Berdaftar REN 36121</span></div></div>` : ""), "tight") : "";
+
+  const tg = g.tentang || { tajuk: `Tentang ${g.kawasan}`, perenggan: g.pengenalan || [] };
+  const tentang = band(eb("Kawasan") + h2(esc(tg.tajuk)) + para(tg.perenggan) +
+    (g.taman && g.taman.length ? `<div class="chips">${g.taman.map((x) => `<span class="chip">${esc(x)}</span>`).join("")}</div>` : "") +
+    `<div class="g-cols">${[["Pengangkutan", g.pengangkutan], ["Sekolah &amp; universiti", g.pendidikan], ["Kemudahan", g.kemudahan]]
+      .filter(([, xs]) => xs && xs.length).map(([h, xs]) => `<div><h3>${h}</h3>${ul(xs)}</div>`).join("")}</div>`, "white");
+
+  const faq = g.faq && g.faq.length ? band(eb("Soalan lazim") + h2(`Soalan pemilik rumah di ${esc(g.kawasan)}`) +
+    `<div class="faq" style="max-width:900px">${g.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</div>` +
+    (g.sumber && g.sumber.length ? `<div style="font-size:13px;color:var(--ink)"><strong>Sumber maklumat kawasan</strong><ul style="margin:6px 0 0;padding-left:18px;line-height:1.8">${g.sumber.map(([n, u]) => `<li><a href="${esc(u)}" rel="nofollow noopener" target="_blank">${esc(n)}</a></li>`).join("")}</ul></div>` : "")) : "";
+
+  const body = hero + matlamat + kajian + kompetitif + kerja + cta + proses + listings + harga + tentang + faq;
+
   const jsonld = { "@context": "https://schema.org", "@graph": [
-    { "@type": "WebPage", name: `Rumah untuk dijual di ${g.kawasan}`, url: SITE + href, description: g.ringkasan, dateModified: g.dikemaskini, inLanguage: "ms-MY",
+    { "@type": "WebPage", name: g.h1 || `Rumah untuk dijual di ${g.kawasan}`, url: SITE + href, description: g.ringkasan, dateModified: g.dikemaskini, inLanguage: "ms-MY",
       about: { "@type": "Place", name: g.kawasan, address: { "@type": "PostalAddress", addressLocality: g.kawasan, addressRegion: g.negeri, addressCountry: "MY" } },
-      author: { "@type": "RealEstateAgent", "@id": SITE + "/#zack", name: "Zack Ahmad" } },
+      author: { "@id": SITE + "/#zack" }, mainEntity: { "@id": SITE + "/#zack" } },
+    { "@type": "RealEstateAgent", "@id": SITE + "/#zack", name: "Zack Ahmad", telephone: "+60196071970", url: SITE + "/",
+      areaServed: { "@type": "Place", name: `${g.kawasan}, ${g.daerah || g.negeri}` },
+      hasOfferCatalog: kj ? { "@type": "OfferCatalog", name: `Servis jual rumah di ${g.kawasan}`, itemListElement: kj.senarai.map(([a, b]) => ({ "@type": "Offer", itemOffered: { "@type": "Service", name: a, description: b } })) } : undefined },
     crumbLd(crumbs),
     { "@type": "ItemList", itemListElement: d.map((l, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + listingPath(l), name: titleOf(l) })) },
     ...(g.faq && g.faq.length ? [{ "@type": "FAQPage", mainEntity: g.faq.map(([q, a]) => ({ "@type": "Question", name: q, acceptedAnswer: { "@type": "Answer", text: a } })) }] : []),
   ] };
-  return page({ title: g.tajuk_seo || `Rumah Untuk Dijual di ${g.kawasan} | Zack Ahmad`, desc: g.ringkasan.length > 158 ? g.ringkasan.slice(0, 155).replace(/\s+\S*$/, "") + "…" : g.ringkasan, canonical: href, jsonld, body });
+  const desc = g.ringkasan.length > 158 ? g.ringkasan.slice(0, 155).replace(/\s+\S*$/, "") + "…" : g.ringkasan;
+  return page({ title: g.tajuk_seo || `Rumah Untuk Dijual di ${g.kawasan} | Zack Ahmad`, desc, canonical: href, jsonld, body });
 }
 
 /* ---------------- homepage prerender ---------------- */
