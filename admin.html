@@ -99,6 +99,7 @@ button{cursor:pointer}
 .chk input{width:18px;height:18px;accent-color:var(--navy)}
 .chk small{color:var(--ink-muted);padding-left:28px;margin-top:-6px}
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.build-st{font-size:13px;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#F6F3EC}.build-st.ok{background:#E3F1E8;color:#1F6B3A}.build-st.bad{background:#F8E1DE;color:#9B2C1F}
 .toast{margin:0;font-size:14px;padding:10px 14px;border-radius:10px;background:#E3F1E8;color:#1F6B3A}
 .toast.bad{background:#FBE9E7;color:#A3261B}
 .storage{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;color:var(--ink-muted)}
@@ -116,6 +117,8 @@ button{cursor:pointer}
       Admin Listing
     </div>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px">
+      <span class="build-st" id="build-st" hidden></span>
+      <button class="btn" id="rebuild" hidden title="Jana semula semua halaman laman (lebih kurang 1 minit)">Bina semula laman</button>
       <a href="/" target="_blank" rel="noopener">Lihat laman ↗</a>
       <span class="who" id="who"></span>
       <button class="btn" id="logout" hidden>Log keluar</button>
@@ -268,6 +271,50 @@ button{cursor:pointer}
   function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
   function rm(n) { return n === null || n === '' || n === undefined ? '—' : Number(n).toLocaleString('en-MY'); }
   function sel() { return state.listings.find(function (l) { return l.id === state.selId; }); }
+  /* ---------- bina semula laman (GitHub Actions) ---------- */
+  var rebuildTimer = null, pollTimer = null, rebuildAt = 0;
+  function buildStatus(msg, kind) { var b = $('build-st'); b.textContent = msg; b.className = 'build-st' + (kind ? ' ' + kind : ''); b.hidden = false; }
+  function hhmm(d) { return new Date(d).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' }); }
+  async function fnError(r) {
+    var out = r.data || {};
+    if (r.error && r.error.context && typeof r.error.context.json === 'function') { try { out = await r.error.context.json(); } catch (e) {} }
+    if (out.error || r.error) {
+      var why = out.error || (r.error && r.error.message) || 'ralat';
+      if (/Failed to send|non-2xx|404/i.test(why) && !out.error) why += ' (Function "rebuild-site" belum di-deploy, atau Verify JWT masih hidup?)';
+      return why;
+    }
+    return null;
+  }
+  function requestRebuild() {
+    clearTimeout(rebuildTimer);
+    buildStatus('⏳ Laman akan dibina semula…');
+    rebuildTimer = setTimeout(runRebuild, 2500); // kumpul beberapa perubahan dalam satu binaan
+  }
+  async function runRebuild() {
+    $('rebuild').disabled = true;
+    var r = await db.functions.invoke('rebuild-site', { body: {} });
+    var why = await fnError(r);
+    $('rebuild').disabled = false;
+    if (why) { buildStatus('⚠️ Bina semula gagal: ' + why, 'bad'); return; }
+    rebuildAt = Date.now();
+    buildStatus('⏳ Laman sedang dibina semula (±1 minit)…');
+    clearTimeout(pollTimer); pollTimer = setTimeout(pollBuild, 20000);
+  }
+  async function pollBuild() {
+    var r = await db.functions.invoke('rebuild-site', { body: { status: true } });
+    var why = await fnError(r);
+    var run = r.data && r.data.run;
+    if (why || !run) { buildStatus('Binaan dicetuskan. Semak laman dalam 1–2 minit.'); return; }
+    var fresh = new Date(run.created_at).getTime() >= rebuildAt - 60000;
+    if (fresh && run.status === 'completed') {
+      if (run.conclusion === 'success') buildStatus('✓ Laman dikemas kini ' + hhmm(run.updated_at), 'ok');
+      else buildStatus('⚠️ Binaan gagal (' + run.conclusion + '). Tekan "Bina semula laman".', 'bad');
+      return;
+    }
+    if (Date.now() - rebuildAt > 6 * 60000) { buildStatus('Binaan mengambil masa lebih lama. Semak laman sebentar lagi.'); return; }
+    pollTimer = setTimeout(pollBuild, 12000);
+  }
+
   function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.hidden = false; }
 
   /* ---------- auth ---------- */
@@ -276,9 +323,9 @@ button{cursor:pointer}
     var session = res.data.session;
     if (session) { showApp(session.user); } else { showLogin(); }
   }
-  function showLogin() { $('login').hidden = false; $('app').hidden = true; $('logout').hidden = true; $('who').textContent = ''; }
+  function showLogin() { $('login').hidden = false; $('app').hidden = true; $('logout').hidden = true; $('rebuild').hidden = true; $('who').textContent = ''; }
   async function showApp(user) {
-    $('login').hidden = true; $('app').hidden = false; $('logout').hidden = false; $('who').textContent = user.email;
+    $('login').hidden = true; $('app').hidden = false; $('logout').hidden = false; $('rebuild').hidden = false; $('who').textContent = user.email;
     await load();
   }
   $('login').addEventListener('submit', async function (e) {
@@ -429,7 +476,9 @@ button{cursor:pointer}
     state.listings = list; render();
     var results = await Promise.all(list.map(function (l, i) { return db.from('listings').update({ urutan: i }).eq('id', l.id); }));
     var bad = results.find(function (r) { return r.error; });
-    if (bad) { toast('Gagal simpan urutan: ' + bad.error.message, true); } else if (state.selId) { toast('Urutan disimpan. Laman ikut susunan ini.'); }
+    if (bad) { toast('Gagal simpan urutan: ' + bad.error.message, true); return; }
+    if (state.selId) toast('Urutan disimpan. Laman ikut susunan ini.');
+    requestRebuild();
   }
 
   /* ---------- editor ---------- */
@@ -493,6 +542,7 @@ button{cursor:pointer}
     var msg = status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
       'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.';
     toast(msg);
+    requestRebuild();
     if (l.status === 'dijual' && l.hantar_telegram && !l.telegram_dihantar_pada) {
       await sendTelegram(l, false, msg);
     }
@@ -536,6 +586,7 @@ button{cursor:pointer}
     }
     toast('Ujian berjaya ✓ Bot ' + (out.bot || '') + ' ' + describeChat(out.sent_to || out));
   });
+  $('rebuild').addEventListener('click', function () { clearTimeout(rebuildTimer); buildStatus('⏳ Mencetuskan binaan…'); runRebuild(); });
   $('tg-resend').addEventListener('click', function () {
     var l = sel(); if (!l) return;
     if (!window.confirm('Hantar semula listing ini ke Telegram channel?')) return;
@@ -552,6 +603,7 @@ button{cursor:pointer}
     if (r.error) { toast('Gagal padam: ' + r.error.message, true); return; }
     state.listings = state.listings.filter(function (x) { return x.id !== l.id; });
     state.selId = null; render();
+    if (l.status !== 'draf') requestRebuild();
   });
   $('add').addEventListener('click', async function () {
     var minU = state.listings.reduce(function (m, l) { return Math.min(m, l.urutan || 0); }, 0);

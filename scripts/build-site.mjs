@@ -716,7 +716,29 @@ async function main() {
 
   // 404
   await write("404.html", page({ title: "Halaman tidak dijumpai | Zack Ahmad", desc: "Halaman tidak dijumpai.", canonical: "/404.html", noindex: true,
-    body: `<main class="wrap" style="padding-top:64px"><h1 style="font-size:40px;font-weight:800">Halaman tidak dijumpai</h1><p style="margin-top:12px;color:var(--ink)">Listing ini mungkin sudah dikeluarkan. <a href="/rumah-dijual/">Lihat rumah yang masih dijual →</a></p></main>` }));
+    body: `<main class="wrap" style="padding-top:64px"><h1 id="nf-h" style="font-size:40px;font-weight:800">Halaman tidak dijumpai</h1><p id="nf-p" style="margin-top:12px;color:var(--ink)">Listing ini mungkin sudah dikeluarkan. <a href="/rumah-dijual/">Lihat rumah yang masih dijual →</a></p></main>
+<script>
+// Listing baru diterbitkan tetapi halamannya belum siap dijana: semak Supabase, papar maklumat ringkas & muat semula automatik.
+(function () {
+  var seg = location.pathname.split("/").filter(Boolean), m = seg[0] === "hartanah" && seg.length === 2 && seg[1].match(/-([0-9]+)$/);
+  if (!m) return;
+  fetch(${JSON.stringify(SB_URL)} + "/rest/v1/listings?select=id,jenis,taman,kawasan,harga,status&status=neq.draf&id=eq." + m[1], { headers: { apikey: ${JSON.stringify(SB_KEY)} } })
+    .then(function (r) { return r.json(); })
+    .then(function (rows) {
+      var l = rows && rows[0]; if (!l) return;
+      var t = [l.jenis, l.taman].filter(Boolean).join(" di ") + (l.kawasan ? ", " + l.kawasan : "");
+      var esc = function (x) { return String(x).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); };
+      document.title = t + " | Zack Ahmad";
+      document.getElementById("nf-h").textContent = t;
+      var wa = "https://wa.me/${WA}?text=" + encodeURIComponent("Salam Zack, saya berminat dengan " + t + " (ID #" + l.id + ").");
+      document.getElementById("nf-p").innerHTML = (l.harga ? "<strong style='font-size:22px'>RM " + Number(l.harga).toLocaleString("en-MY") + "</strong><br>" : "") +
+        "Listing ini baru diterbitkan dan halamannya sedang disediakan. Halaman ini akan dimuat semula secara automatik dalam beberapa saat." +
+        "<br><br><a class='btn btn-navy' href='" + esc(wa) + "' target='_blank' rel='noopener'>WhatsApp Zack sekarang</a> &nbsp; <a href='/#hartanah-" + l.id + "'>Lihat di laman utama →</a>";
+      var n = +(sessionStorage.getItem("nf-" + l.id) || 0);
+      if (n < 12) { sessionStorage.setItem("nf-" + l.id, n + 1); setTimeout(function () { location.reload(); }, 20000); }
+    }).catch(function () {});
+})();
+</script>` }));
 
   // Laman utama: pra-isi kad listing supaya Google nampak tanpa JavaScript
   const homeFile = path.join(OUT, "index.html");
