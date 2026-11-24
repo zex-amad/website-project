@@ -247,6 +247,7 @@ p{margin:0}
 /* guides */
 .guide{flex:1 1 300px;text-decoration:none;color:var(--cream)!important;background:var(--navy-2);border-radius:20px;padding:28px;display:flex;flex-direction:column;gap:12px}
 .guide:hover{outline:1px solid var(--accent)}
+.guide{max-width:520px}.guide em{font-style:normal;font-weight:600;color:var(--accent);font-size:15px}
 .guide small{font-size:13px;font-weight:600;color:var(--accent)}
 .guide strong{font:700 20px/1.35 var(--head)}
 .guide span{font-size:15px;color:var(--muted-2)}
@@ -603,13 +604,9 @@ p{margin:0}
         <span class="eyebrow">Panduan hartanah</span>
         <h2 class="h2">Baca sebelum beli atau jual</h2>
       </div>
-      <a class="more" href="/panduan">Semua panduan →</a>
+      <a class="more" href="/panduan/">Semua panduan →</a>
     </div>
-    <div class="row cards">
-      <a class="guide" href="/panduan/cara-jual-rumah-cepat-lembah-klang"><small>Penjual</small><strong>Cara jual rumah dengan cepat di Lembah Klang</strong><span>[Ringkasan artikel]</span></a>
-      <a class="guide" href="/panduan/pinjaman-lppsa-atau-bank"><small>Pembeli</small><strong>Pinjaman LPPSA atau bank: mana lebih sesuai?</strong><span>[Ringkasan artikel]</span></a>
-      <a class="guide" href="/panduan/kos-guaman-duti-setem-beli-rumah"><small>Kos</small><strong>Kos guaman dan duti setem beli rumah</strong><span>[Ringkasan artikel]</span></a>
-    </div>
+    <div class="row cards" id="panduan-list"><!-- diisi semasa bina laman dari data/panduan/ --></div>
   </div>
 </section>
 

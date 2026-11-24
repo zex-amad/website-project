@@ -189,6 +189,18 @@ table{border-collapse:collapse;font-size:15px;width:100%;max-width:560px}th,td{t
 .g-steps{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:20px}.g-steps li{flex:1 1 200px;border-top:2px solid var(--brass);padding-top:18px;display:flex;flex-direction:column;gap:6px}
 .g-steps b{font:800 15px var(--head);color:var(--brass)}.g-steps strong{font:700 18px var(--head)}.g-steps span{font-size:15px;line-height:1.6;color:var(--ink)}
 .g-cols{display:flex;flex-wrap:wrap;gap:32px}.g-cols>div{flex:1 1 300px;display:flex;flex-direction:column;gap:8px}.g-cols h3{font-size:19px;font-weight:800}
+.art-wrap{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start;padding-bottom:40px}
+.art{flex:999 1 600px;min-width:0;max-width:760px;display:flex;flex-direction:column;gap:18px}
+.art-h1{font-weight:800;font-size:clamp(30px,4.2vw,48px);line-height:1.12}
+.byline{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--ink)}.byline img{width:40px;height:40px;border-radius:999px;object-fit:cover;object-position:center top;background:#fff}.byline a{color:var(--navy);text-decoration:none}
+.toc{background:#fff;border:1px solid var(--cl);border-radius:16px;padding:18px 22px}.toc strong{font:800 16px var(--head)}.toc ol{margin:8px 0 0;padding-left:0;list-style:none;line-height:1.9;font-size:15px}.toc a{color:var(--navy)}
+.prose{display:flex;flex-direction:column;gap:16px;font-size:17px;line-height:1.8;color:var(--ink)}
+.prose h2{font-size:28px;font-weight:800;color:var(--navy);margin-top:20px;scroll-margin-top:96px}.prose h3{font-size:21px;font-weight:800;color:var(--navy)}
+.prose ul,.prose ol{margin:0;padding-left:22px}.prose li{margin:4px 0}.prose strong{color:var(--navy)}
+.prose .tip{background:#FBF4E6;border-radius:14px;padding:16px 18px;color:var(--navy)}
+.art-cta{background:var(--navy);color:var(--cream);border-radius:20px;padding:28px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;margin-top:16px}
+.art-cta>div{flex:1 1 360px;display:flex;flex-direction:column;gap:6px}.art-cta strong{font:800 22px var(--head)}.art-cta span{color:var(--muted)}
+.art-side{flex:1 1 280px;max-width:340px;display:flex;flex-direction:column;gap:16px}
 @media (max-width:720px){.agent{position:static;max-width:none}.price{font-size:28px}}
 `;
 
@@ -230,7 +242,7 @@ ${jsonld ? `<script type="application/ld+json">${JSON.stringify(jsonld).replace(
 <body>
 <header class="top"><nav class="nav" aria-label="Utama">
 <a href="/" class="brand">${HOUSE}<span>Legacy Real Property</span></a>
-<div class="links"><a href="/">Utama</a><a href="/rumah-dijual/">Rumah Dijual</a><a href="/terjual/">Rekod Jualan</a><a href="/#hubungi">Hubungi</a>
+<div class="links"><a href="/">Utama</a><a href="/rumah-dijual/">Rumah Dijual</a><a href="/terjual/">Rekod Jualan</a><a href="/panduan/">Panduan</a><a href="/#hubungi">Hubungi</a>
 <a href="https://wa.me/${WA}" class="btn btn-accent" target="_blank" rel="noopener">WhatsApp Sekarang</a></div>
 </nav></header>
 ${body}
@@ -491,6 +503,106 @@ ${g.pembeli ? `<div class="nota" style="margin-top:8px"><div><h2>Untuk pembeli</
   return page({ title: g.tajuk_seo || `Rumah Untuk Dijual di ${g.kawasan} | Zack Ahmad`, desc, canonical: href, jsonld, body });
 }
 
+/* ---------------- articles (panduan) ---------------- */
+const ARTICLES = [];
+try {
+  for (const f of await fs.readdir(path.join(ROOT, "data", "panduan"))) {
+    if (!f.endsWith(".md")) continue;
+    const raw = await fs.readFile(path.join(ROOT, "data", "panduan", f), "utf8");
+    const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+    if (!m) continue;
+    const meta = Object.fromEntries(m[1].split("\n").filter((l) => l.includes(": ")).map((l) => [l.slice(0, l.indexOf(": ")).trim(), l.slice(l.indexOf(": ") + 2).trim()]));
+    ARTICLES.push({ ...meta, slug: meta.slug || f.replace(/\.md$/, ""), body: m[2].trim() });
+  }
+  ARTICLES.sort((a, b) => String(b.tarikh).localeCompare(String(a.tarikh)));
+} catch { /* tiada artikel */ }
+
+function mdInline(t) {
+  return esc(t)
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+|\/[^)\s]*)\)/g, '<a href="$2">$1</a>');
+}
+function mdToHtml(md) {
+  const toc = [];
+  const html = md.split(/\n\s*\n/).map((block) => {
+    const lines = block.split("\n");
+    if (/^##\s/.test(lines[0])) {
+      const t = lines[0].replace(/^##\s+/, "");
+      const id = slugify(t);
+      toc.push([t, id]);
+      return `<h2 id="${id}">${mdInline(t)}</h2>`;
+    }
+    if (/^###\s/.test(lines[0])) return `<h3>${mdInline(lines[0].replace(/^###\s+/, ""))}</h3>`;
+    if (lines.every((l) => /^[*-]\s/.test(l))) return `<ul>${lines.map((l) => `<li>${mdInline(l.replace(/^[*-]\s+/, ""))}</li>`).join("")}</ul>`;
+    if (lines.every((l) => /^\d+\.\s/.test(l))) return `<ol>${lines.map((l) => `<li>${mdInline(l.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
+    const text = lines.join(" ");
+    if (/^Tip:/i.test(text)) return `<p class="tip"><strong>Tip:</strong> ${mdInline(text.replace(/^Tip:\s*/i, ""))}</p>`;
+    return `<p>${mdInline(text)}</p>`;
+  }).join("\n");
+  return { html, toc };
+}
+const readMins = (md) => Math.max(1, Math.round(md.split(/\s+/).length / 200));
+const articlePath = (a) => `/panduan/${a.slug}/`;
+
+function articleCard(a) {
+  return `<a class="card" href="${articlePath(a)}" style="padding:24px;gap:10px">
+<span class="eyebrow">${esc(a.kategori || "Panduan")} · ${readMins(a.body)} minit bacaan</span>
+<span style="font:800 20px/1.35 var(--head)">${esc(a.tajuk)}</span>
+<span class="m" style="line-height:1.6">${esc(a.ringkasan)}</span>
+<span style="color:var(--brass);font-weight:600">Baca artikel →</span></a>`;
+}
+
+function articlePage(a) {
+  const { html, toc } = mdToHtml(a.body);
+  const p = articlePath(a);
+  const crumbs = [["Utama", "/"], ["Panduan", "/panduan/"], [a.tajuk, p]];
+  const others = ARTICLES.filter((x) => x.slug !== a.slug).slice(0, 3);
+  const guides = [...GUIDES.values()];
+  const askWa = waLink(`Salam Zack, saya baca artikel "${a.tajuk}". Saya nak tanya tentang jual rumah.`);
+  const body = `<main class="wrap art-wrap">
+<article class="art">
+${crumbHtml([["Utama", "/"], ["Panduan", "/panduan/"], [a.kategori || "Artikel", p]])}
+<span class="eyebrow">Panduan ${esc((a.kategori || "").toLowerCase())}</span>
+<h1 class="art-h1">${esc(a.tajuk)}</h1>
+<div class="byline"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="40" height="40"><span><a href="/"><strong>Zack Ahmad</strong></a> · Perunding Hartanah Berdaftar REN 36121<br><time datetime="${esc(a.tarikh)}">${fmtDate(a.tarikh)}</time>${a.kemaskini && a.kemaskini !== a.tarikh ? ` · Dikemas kini <time datetime="${esc(a.kemaskini)}">${fmtDate(a.kemaskini)}</time>` : ""} · ${readMins(a.body)} minit bacaan</span></div>
+${toc.length > 2 ? `<nav class="toc" aria-label="Kandungan"><strong>Kandungan</strong><ol>${toc.map(([t, id]) => `<li><a href="#${id}">${esc(t)}</a></li>`).join("")}</ol></nav>` : ""}
+<div class="prose">${html}</div>
+<div class="art-cta"><div><strong>Nak jual rumah dengan harga yang munasabah?</strong><span>Saya bantu kaji nilai bank dan harga pasaran, dan uruskan jualan sehingga serahan kunci.</span></div><a class="btn btn-accent" href="${askWa}" target="_blank" rel="noopener">WhatsApp Zack</a></div>
+</article>
+<aside class="art-side">
+<div class="agent" style="position:static;max-width:none"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="64" height="64"><strong style="font:800 19px var(--head)">Tentang penulis</strong>
+<span style="font-size:14px;line-height:1.6;color:var(--muted)">Zack Ahmad, Perunding Hartanah Berdaftar REN 36121 di Legacy Real Property Sdn Bhd. Hampir 10 tahun pengalaman, 300+ unit rumah terjual.</span>
+${REVIEWS ? `<a href="${REVIEWS.profile_url}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:14px">${REVIEWS.rating} ★★★★★ · ${REVIEWS.count} ulasan Google</a>` : ""}</div>
+<div class="box" style="gap:8px;font-size:15px"><strong style="font:800 16px var(--head)">Baca juga</strong>
+${guides.map((g) => `<a href="${areaPath(g.kawasan, g.negeri)}">Ejen hartanah ${esc(g.kawasan)} →</a>`).join("")}
+${others.map((x) => `<a href="${articlePath(x)}">${esc(x.tajuk)} →</a>`).join("")}
+<a href="/rumah-dijual/">Semua rumah dijual →</a></div>
+</aside>
+</main>`;
+  const jsonld = { "@context": "https://schema.org", "@graph": [
+    { "@type": "Article", headline: a.tajuk, description: a.ringkasan, url: SITE + p, mainEntityOfPage: SITE + p, inLanguage: "ms-MY",
+      datePublished: a.tarikh, dateModified: a.kemaskini || a.tarikh, image: SITE + "/img/zack-ahmad.jpg",
+      author: { "@type": "Person", name: "Zack Ahmad", jobTitle: "Perunding Hartanah Berdaftar (REN 36121)", url: SITE + "/", worksFor: { "@type": "Organization", name: "Legacy Real Property Sdn Bhd" } },
+      publisher: { "@id": SITE + "/#zack" }, articleSection: a.kategori, wordCount: a.body.split(/\s+/).length },
+    crumbLd(crumbs),
+  ] };
+  return page({ title: a.tajuk_seo || `${a.tajuk} | Zack Ahmad`, desc: a.ringkasan.length > 158 ? a.ringkasan.slice(0, 155).replace(/\s+\S*$/, "") + "…" : a.ringkasan, canonical: p, jsonld, body });
+}
+
+function articlesIndex() {
+  const crumbs = [["Utama", "/"], ["Panduan", "/panduan/"]];
+  const body = `<main class="wrap">
+${crumbHtml(crumbs)}
+<div style="display:flex;flex-direction:column;gap:12px;padding:12px 0 8px;max-width:760px">
+<h1 style="font-weight:800;font-size:clamp(30px,4vw,46px)">Panduan hartanah</h1>
+<p style="font-size:18px;color:var(--ink)">Tip dan panduan jual beli rumah oleh Zack Ahmad, Perunding Hartanah Berdaftar REN 36121.</p>
+</div>
+<div class="cards" style="margin-top:20px">${ARTICLES.map(articleCard).join("")}</div>
+</main>`;
+  return page({ title: "Panduan Hartanah – Tip Jual & Beli Rumah | Zack Ahmad, REN 36121", desc: "Tip dan panduan jual beli rumah oleh Zack Ahmad, Perunding Hartanah Berdaftar REN 36121.", canonical: "/panduan/", body,
+    jsonld: { "@context": "https://schema.org", "@graph": [crumbLd(crumbs), { "@type": "ItemList", itemListElement: ARTICLES.map((a, i) => ({ "@type": "ListItem", position: i + 1, url: SITE + articlePath(a), name: a.tajuk })) }] } });
+}
+
 /* ---------------- homepage prerender ---------------- */
 function homeCard(l) {
   const title = titleOf(l);
@@ -563,6 +675,16 @@ async function main() {
     if (d.length || t.length) urls.push({ loc: href, pri: "0.7" });
   }
 
+  // Panduan (artikel)
+  if (ARTICLES.length) {
+    await write("panduan/index.html", articlesIndex());
+    urls.push({ loc: "/panduan/", pri: "0.7" });
+    for (const a of ARTICLES) {
+      await write(path.join(articlePath(a), "index.html"), articlePage(a));
+      urls.push({ loc: articlePath(a), lastmod: a.kemaskini || a.tarikh, pri: "0.7" });
+    }
+  }
+
   // Senarai URL untuk IndexNow (dibaca oleh scripts/indexnow.mjs selepas deploy)
   let notify;
   if (process.env.INDEXNOW_ALL === "1") notify = urls.map((u) => SITE + u.loc);
@@ -583,6 +705,8 @@ async function main() {
   let home = await fs.readFile(homeFile, "utf8");
   home = home.replace('<div class="row cards" id="listings"></div>', `<div class="row cards" id="listings">${dijual.slice(0, 6).map(homeCard).join("")}</div>`);
   home = home.replace('<div class="row cards" id="sold"></div>', `<div class="row cards" id="sold"${terjual.length ? "" : " hidden"}>${terjual.slice(0, 6).map(homeCard).join("")}</div>`);
+  home = home.replace('<div class="row cards" id="panduan-list"><!-- diisi semasa bina laman dari data/panduan/ --></div>',
+    `<div class="row cards" id="panduan-list">${ARTICLES.slice(0, 3).map((a) => `<a class="guide" href="${articlePath(a)}"><small>${esc(a.kategori || "Panduan")} · ${readMins(a.body)} minit bacaan</small><strong>${esc(a.tajuk)}</strong><span>${esc(a.ringkasan)}</span><em>Baca artikel →</em></a>`).join("")}</div>`);
   await fs.writeFile(homeFile, home);
 
   // llms.txt: tambah senarai listing terkini
@@ -590,7 +714,7 @@ async function main() {
   try {
     let llms = await fs.readFile(llmsFile, "utf8");
     const lines = dijual.map((l) => `- [${titleOf(l)}](${SITE}${listingPath(l)}): ${num(l.harga) ? "RM " + num(l.harga) + ", " : ""}${[l.bilik != null ? l.bilik + " bilik" : "", l.keluasan_kps != null ? num(l.keluasan_kps) + " kps" : "", l.pegangan].filter(Boolean).join(", ")}`);
-    const block = `\n## Rumah untuk dijual (dikemas kini ${new Date().toISOString().slice(0, 10)})\n\n${lines.length ? lines.join("\n") : "- Tiada listing aktif buat masa ini."}\n- [Semua rumah dijual](${SITE}/rumah-dijual/)\n${[...GUIDES.values()].map((g) => `- [Panduan kawasan: ${g.kawasan}](${SITE}${areaPath(g.kawasan, g.negeri)})\n`).join("")}- [Rekod jualan](${SITE}/terjual/)\n`;
+    const block = `\n## Rumah untuk dijual (dikemas kini ${new Date().toISOString().slice(0, 10)})\n\n${lines.length ? lines.join("\n") : "- Tiada listing aktif buat masa ini."}\n- [Semua rumah dijual](${SITE}/rumah-dijual/)\n${[...GUIDES.values()].map((g) => `- [Panduan kawasan: ${g.kawasan}](${SITE}${areaPath(g.kawasan, g.negeri)})\n`).join("")}- [Rekod jualan](${SITE}/terjual/)\n${ARTICLES.map((a) => `- [Panduan: ${a.tajuk}](${SITE}${articlePath(a)}): ${a.ringkasan}\n`).join("")}`;
     llms = llms.replace(/\n## Optional/, block + "\n## Optional");
     await fs.writeFile(llmsFile, llms);
   } catch { /* tiada llms.txt */ }
