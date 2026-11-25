@@ -704,12 +704,14 @@ async function main() {
   for (const l of all) if (l.kawasan) { const key = areaPath(l.kawasan, l.negeri); if (!areas.has(key)) areas.set(key, { kawasan: l.kawasan, negeri: l.negeri || "Selangor" }); }
   for (const g of GUIDES.values()) { const key = areaPath(g.kawasan, g.negeri); if (!areas.has(key)) areas.set(key, { kawasan: g.kawasan, negeri: g.negeri || "Selangor" }); }
   const KW = await loadKawasan();
+  const tanpaFakta = (globalThis.__tanpaFakta = []);
   const kwBySlug = new Map(KW.map((r) => [slugify(r.nama), r]));
   for (const r of KW) { const key = areaPath(r.nama, r.negeri); if (!areas.has(key)) areas.set(key, { kawasan: r.nama, negeri: r.negeri || "Selangor", tarikh: r.dicipta }); }
   for (const [href, a] of areas) {
     const inArea = (l) => slugify(l.kawasan) === slugify(a.kawasan) && slugify(l.negeri || "Selangor") === slugify(a.negeri);
     const d = dijual.filter(inArea), t = terjual.filter(inArea);
     const kw = kwBySlug.get(slugify(a.kawasan));
+    if (!GUIDES.has(slugify(a.kawasan))) tanpaFakta.push(`${a.kawasan}|${a.negeri}`);
     let guide = GUIDES.get(slugify(a.kawasan)) || autoGuide(a.kawasan, a.negeri, a.tarikh || (kw && kw.dicipta));
     if (kw && String(kw.nota_zack || "").trim()) {
       guide = { ...guide, nota_zack: kw.nota_zack.trim() };
@@ -810,6 +812,7 @@ async function main() {
     .map((u) => `  <url><loc>${SITE}${u.loc}</loc><lastmod>${u.lastmod || today}</lastmod><priority>${u.pri}</priority></url>`).join("\n")}\n</urlset>\n`;
   await write("sitemap.xml", sitemap);
 
+  console.log(`KAWASAN_TANPA_FAKTA: ${JSON.stringify(globalThis.__tanpaFakta || [])}`);
   console.log(`Siap: ${all.length} listing (${dijual.length} dijual, ${terjual.length} terjual), ${areas.size} halaman kawasan, ${urls.length} URL dalam sitemap.`);
 }
 
