@@ -73,7 +73,7 @@ button{cursor:pointer}
 .r-price{font:800 17px var(--head);min-width:110px}
 .pill{font-size:12px;font-weight:600;letter-spacing:.06em;padding:6px 10px;border-radius:999px}
 .p-dijual{background:#E3F1E8;color:#1F6B3A}
-.p-terjual{background:var(--brass);color:#fff}
+.p-terjual{background:var(--brass);color:#fff}.p-cobroke{background:#EDE7F6;color:#4A2C82;margin-left:4px}
 .p-draf{background:#ECEEF2;color:var(--ink-muted)}
 .move{display:flex;flex-direction:column;gap:2px}
 .move button{width:32px;height:28px;border:1px solid var(--input);background:#fff;border-radius:8px;font-size:12px;color:var(--navy);padding:0}
@@ -245,6 +245,19 @@ button{cursor:pointer}
         </div>
       </details>
 
+      <div class="chk" id="ejen-box">
+        <label><input type="checkbox" id="e-ejen"> Listing ini daripada ejen lain (co-broke)</label>
+        <small>🔒 Peribadi: maklumat ini hanya disimpan dalam database dan dipaparkan di admin, tidak di laman.</small>
+        <div class="grid" id="ejen-fields" hidden>
+          <div class="field"><label for="e-ejen-nama">Nama ejen</label><input id="e-ejen-nama" type="text" autocomplete="off" placeholder="cth. Ahmad Ali (REN 12345)"></div>
+          <div class="field"><label for="e-ejen-tel">No. telefon ejen</label><input id="e-ejen-tel" type="tel" inputmode="tel" autocomplete="off" placeholder="cth. 012-345 6789"></div>
+          <div class="field full"><label for="e-ejen-url">Pautan listing asal</label><input id="e-ejen-url" type="url" inputmode="url" autocomplete="off" placeholder="https://www.propertyguru.com.my/..."></div>
+          <div class="field full"><label for="e-ejen-nota">Nota <span style="font-weight:400">(pilihan: pembahagian komisen, syarat, dll.)</span></label><textarea id="e-ejen-nota" rows="2"></textarea></div>
+          <div class="field full" id="ejen-links" hidden></div>
+        </div>
+        <small id="ejen-note" hidden style="color:#A3261B">Jalankan <code>supabase/migrations/003_ejen_lain.sql</code> di Supabase dahulu untuk simpan maklumat ejen lain.</small>
+      </div>
+
       <div class="chk">
         <label><input type="checkbox" id="e-tg"> Hantar ke Telegram channel</label>
         <small id="tg-note"></small>
@@ -273,7 +286,7 @@ button{cursor:pointer}
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   var $ = function (id) { return document.getElementById(id); };
-  var state = { listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
+  var state = { ejen: {}, ejenOk: true, listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -351,6 +364,9 @@ button{cursor:pointer}
     var r = await db.from('listings').select('*').order('urutan', { ascending: true }).order('id', { ascending: false });
     if (r.error) { alertBox('Gagal memuatkan listing: ' + r.error.message); return; }
     state.listings = r.data || [];
+    var e = await db.from('listing_ejen_lain').select('*');
+    state.ejenOk = !e.error; state.ejen = {};
+    (e.data || []).forEach(function (x) { state.ejen[x.listing_id] = x; });
     if (state.selId && !sel()) state.selId = null;
     render();
   }
@@ -400,6 +416,7 @@ button{cursor:pointer}
         '<span class="r-meta">' + esc(l.kawasan || '—') + ' · ' + (l.bilik == null ? '—' : l.bilik) + ' bilik · ' + (l.keluasan_kps == null ? '—' : l.keluasan_kps) + ' kps</span></div>' +
         '<span class="r-price">RM ' + rm(l.harga) + '</span>' +
         '<span class="pill p-' + l.status + '">' + l.status.toUpperCase() + '</span>' +
+        (state.ejen[l.id] ? '<span class="pill p-cobroke" title="Daripada ejen lain: ' + esc(state.ejen[l.id].nama_ejen || '') + '">CO-BROKE</span>' : '') +
         (state.locked ? '' : '<div class="move"><button type="button" data-mv="-1" aria-label="Naik">▲</button><button type="button" data-mv="1" aria-label="Turun">▼</button></div>') +
         '</li>';
     }).join('');
@@ -517,7 +534,12 @@ button{cursor:pointer}
       $('e-tg').checked = !!l.hantar_telegram; $('e-crm').checked = !!l.kongsi_crm;
       editStatus = l.status;
       setSoldWhen(l.tarikh_terjual);
+      var ej = state.ejen[l.id] || {};
+      $('e-ejen').checked = !!state.ejen[l.id];
+      $('e-ejen-nama').value = ej.nama_ejen || ''; $('e-ejen-tel').value = ej.telefon_ejen || '';
+      $('e-ejen-url').value = ej.pautan || ''; $('e-ejen-nota').value = ej.nota || '';
     }
+    renderEjen();
     $('sold-when').hidden = editStatus !== 'terjual';
     $('e-id').textContent = 'ID #' + l.id;
     $('extra-note').hidden = 'ringkasan' in l;
@@ -528,6 +550,35 @@ button{cursor:pointer}
     $('tg-resend').hidden = !(l.telegram_dihantar_pada && l.status === 'dijual');
     renderPhotos(l);
   }
+  function telUrl(t) { var d = String(t || '').replace(/\D/g, ''); if (d.charAt(0) === '0') d = '6' + d; return d; }
+  function renderEjen() {
+    var on = $('e-ejen').checked;
+    $('ejen-fields').hidden = !on;
+    $('ejen-note').hidden = !(on && !state.ejenOk);
+    var t = telUrl($('e-ejen-tel').value), u = $('e-ejen-url').value.trim(), h = [];
+    if (t.length >= 10) h.push('<a class="btn btn-line" style="min-height:36px;padding:6px 14px;font-size:13px" href="https://wa.me/' + t + '" target="_blank" rel="noopener">WhatsApp ejen</a>', '<a class="btn btn-line" style="min-height:36px;padding:6px 14px;font-size:13px" href="tel:+' + t + '">Telefon ejen</a>');
+    if (/^https?:\/\//i.test(u)) h.push('<a class="btn btn-line" style="min-height:36px;padding:6px 14px;font-size:13px" href="' + esc(u) + '" target="_blank" rel="noopener noreferrer">Buka listing asal ↗</a>');
+    $('ejen-links').innerHTML = h.length ? '<div style="display:flex;flex-wrap:wrap;gap:8px">' + h.join('') + '</div>' : '';
+    $('ejen-links').hidden = !h.length;
+  }
+  ['e-ejen', 'e-ejen-tel', 'e-ejen-url'].forEach(function (id) { $(id).addEventListener(id === 'e-ejen' ? 'change' : 'input', renderEjen); });
+  async function saveEjen(l) {
+    var on = $('e-ejen').checked;
+    if (!state.ejenOk) return on ? 'jadual listing_ejen_lain belum wujud (jalankan migration 003)' : null;
+    if (on) {
+      var row = { listing_id: l.id, nama_ejen: $('e-ejen-nama').value.trim(), telefon_ejen: $('e-ejen-tel').value.trim(),
+        pautan: $('e-ejen-url').value.trim(), nota: $('e-ejen-nota').value.trim(), dikemaskini: new Date().toISOString() };
+      var r = await db.from('listing_ejen_lain').upsert(row).select().single();
+      if (r.error) return r.error.message;
+      state.ejen[l.id] = r.data;
+    } else if (state.ejen[l.id]) {
+      var d = await db.from('listing_ejen_lain').delete().eq('listing_id', l.id);
+      if (d.error) return d.error.message;
+      delete state.ejen[l.id];
+    }
+    return null;
+  }
+
   $('seg').addEventListener('click', function (e) {
     var b = e.target.closest('[data-s]'); if (!b) return;
     editStatus = b.getAttribute('data-s'); renderEditor();
@@ -559,10 +610,11 @@ button{cursor:pointer}
     $('save').disabled = $('draft').disabled = false;
     if (r.error) { toast('Gagal simpan: ' + r.error.message, true); return; }
     Object.assign(l, r.data); editStatus = l.status;
+    var ejenErr = await saveEjen(l);
     render();
     var msg = status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
       'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.';
-    toast(msg);
+    if (ejenErr) toast(msg + ' ⚠️ Tetapi maklumat ejen lain gagal disimpan: ' + ejenErr, true); else toast(msg);
     requestRebuild();
     if (l.status === 'dijual' && l.hantar_telegram && !l.telegram_dihantar_pada) {
       await sendTelegram(l, false, msg);
