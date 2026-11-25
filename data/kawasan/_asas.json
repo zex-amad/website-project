@@ -155,8 +155,34 @@
     "Harga kompetitif dari hari pertama"
   ],
   "eyebrow": "Perunding Hartanah Berdaftar · REN 36121 · Fokus {kawasan}",
-  "h1": "Ejen hartanah berdaftar untuk jual rumah di {kawasan}",
-  "cta_utama": "Saya nak jual rumah di {kawasan}",
-  "tajuk_seo": "Ejen Hartanah {kawasan} – Jual Rumah Cepat, Harga Munasabah | Zack Ahmad REN 36121",
-  "pembeli": "Mencari rumah di {kawasan}? Saya bantu senarai pendek ikut bajet, terangkan nilaian bank dan kelayakan pinjaman (termasuk LPPSA), dan pastikan harga yang anda bayar selari dengan pasaran."
+  "h1": "Ejen hartanah berdaftar untuk jual rumah & hartanah di {kawasan}",
+  "cta_utama": "Saya nak jual hartanah di {kawasan}",
+  "tajuk_seo": "Ejen Hartanah {kawasan} – Jual Rumah, Tanah, Kedai & Kilang | Zack Ahmad REN 36121",
+  "pembeli": "Mencari rumah di {kawasan}? Saya bantu senarai pendek ikut bajet, terangkan nilaian bank dan kelayakan pinjaman (termasuk LPPSA), dan pastikan harga yang anda bayar selari dengan pasaran.",
+  "jenis_hartanah": {
+    "tajuk": "Hartanah yang saya bantu jual di {kawasan}",
+    "pengenalan": "Bukan rumah teres sahaja. Saya membantu pemilik menjual pelbagai jenis hartanah kediaman dan komersial di {kawasan} dan sekitarnya.",
+    "senarai": [
+      [
+        "Rumah landed",
+        "Teres 1, 2 dan 3 tingkat, semi-D dan banglo."
+      ],
+      [
+        "Strata",
+        "Flat, pangsapuri, kondominium dan townhouse, termasuk semakan yuran penyelenggaraan dan status hak milik strata."
+      ],
+      [
+        "Tanah",
+        "Tanah lot banglo, tanah pertanian dan tanah pembangunan, termasuk semakan syarat nyata dan kategori tanah."
+      ],
+      [
+        "Kedai komersial",
+        "Kedai pejabat, rumah kedai dan unit komersial, untuk pembeli yang mahu guna sendiri atau pelaburan sewaan."
+      ],
+      [
+        "Kilang",
+        "Kilang teres, semi-D dan sesebuah, termasuk penilaian ikut keluasan tanah, binaan dan akses lebuh raya."
+      ]
+    ]
+  }
 }

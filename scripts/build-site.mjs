@@ -100,12 +100,25 @@ async function copyDir(src, dst) {
 /* ---------------- data ---------------- */
 let REVIEWS = null;
 const GUIDES = new Map(); // panduan kawasan: data/kawasan/{slug-kawasan}.json
+// _asas.json: bahagian servis/proses/FAQ yang sama untuk semua kawasan ({kawasan} diganti nama kawasan).
+// Fail kawasan hanya perlu maklumat khusus kawasan; apa-apa medan dalam fail kawasan mengatasi asas.
+let ASAS = {};
+try { ASAS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", "_asas.json"), "utf8")); } catch { /* tiada asas */ }
+const fill = (v, k) => JSON.parse(JSON.stringify(v).replaceAll("{kawasan}", String(k).replace(/["\\]/g, "")));
+// Panduan automatik untuk kawasan baru (dari admin / listing) yang belum ada fail data/kawasan/*.json.
+// Hanya teks umum tentang servis Zack: tiada fakta kawasan yang belum disemak.
+function autoGuide(k, negeri, tarikh) {
+  return {
+    ...fill(ASAS, k), kawasan: k, negeri: negeri || "Selangor", daerah: negeri || "Selangor", auto: true,
+    dikemaskini: (tarikh || new Date().toISOString()).slice(0, 10),
+    ringkasan: `Saya Zack Ahmad, Perunding Hartanah Berdaftar (REN 36121) yang aktif membantu pemilik menjual hartanah di ${k}: rumah teres, semi-D, banglo, flat, pangsapuri, kondominium, townhouse, tanah, kedai komersial dan kilang. Matlamat saya: hartanah anda terjual cepat pada harga yang munasabah, dan pembeli rasa berbaloi.`,
+    tentang: { tajuk: `Menjual hartanah di ${k}`, perenggan: [
+      `Setiap taman dan projek di ${k} ada pembeli dan julat harga tersendiri. Rumah di taman yang sama pun boleh berbeza harga ikut kedudukan lot, keadaan, ubah suai dan status pegangan. Sebab itu saya tidak menetapkan harga berdasarkan purata kawasan, tetapi berdasarkan transaksi sebenar yang paling hampir dengan hartanah anda.`,
+      `Sebagai perunding hartanah berdaftar, saya menguruskan proses jualan dari awal hingga kunci diserahkan: kajian nilai bank dan harga pasaran, pemasaran, tapisan pembeli yang layak pinjaman, rundingan, serta penyelarasan dengan peguam dan bank. Anda tidak perlu melayan setiap pertanyaan sendiri.`,
+    ] },
+  };
+}
 try {
-  // _asas.json: bahagian servis/proses/FAQ yang sama untuk semua kawasan ({kawasan} diganti nama kawasan).
-  // Fail kawasan hanya perlu maklumat khusus kawasan; apa-apa medan dalam fail kawasan mengatasi asas.
-  let ASAS = {};
-  try { ASAS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", "_asas.json"), "utf8")); } catch { /* tiada asas */ }
-  const fill = (v, k) => JSON.parse(JSON.stringify(v).replaceAll("{kawasan}", k.replace(/["\\]/g, "")));
   for (const f of await fs.readdir(path.join(ROOT, "data", "kawasan"))) {
     if (!f.endsWith(".json") || f.startsWith("_")) continue;
     const g = JSON.parse(await fs.readFile(path.join(ROOT, "data", "kawasan", f), "utf8"));
@@ -116,6 +129,15 @@ try {
 } catch { /* tiada panduan */ }
 export const INDEXNOW_KEY = "d79b637a3c99c35e28393fa9726a879a";
 try { REVIEWS = JSON.parse(await fs.readFile(path.join(ROOT, "data", "reviews.json"), "utf8")); } catch { /* tiada ulasan */ }
+async function loadKawasan() {
+  if (process.env.KAWASAN_JSON) return JSON.parse(await fs.readFile(process.env.KAWASAN_JSON, "utf8"));
+  if (process.env.LISTINGS_JSON) return [];
+  try {
+    const res = await fetch(`${SB_URL}/rest/v1/kawasan?select=*`, { headers: { apikey: SB_KEY } });
+    if (!res.ok) { console.warn(`Amaran: jadual kawasan tidak dapat dibaca (${res.status}). Jalankan migration 004.`); return []; }
+    return await res.json();
+  } catch (e) { console.warn("Amaran: jadual kawasan:", e.message); return []; }
+}
 async function loadListings() {
   if (process.env.LISTINGS_JSON) return JSON.parse(await fs.readFile(process.env.LISTINGS_JSON, "utf8"));
   const url = `${SB_URL}/rest/v1/listings?select=*&status=in.(dijual,terjual)&order=urutan.asc,id.desc`;
@@ -462,6 +484,10 @@ ${crumbHtml(crumbs).replace('class="crumb"', 'class="crumb" style="color:var(--m
   const m = g.matlamat;
   const matlamat = m ? band(eb("Matlamat") + h2(esc(m.tajuk)) + para(m.perenggan)) : "";
 
+  const jh = g.jenis_hartanah;
+  const jenisH = jh ? band(eb("Jenis hartanah") + h2(esc(jh.tajuk)) + (jh.pengenalan ? `<p class="g-p">${esc(jh.pengenalan)}</p>` : "") +
+    `<div class="g-cards">${jh.senarai.map(([a, b]) => `<div class="g-card"><h3>${esc(a)}</h3><p>${esc(b)}</p></div>`).join("")}</div>`, "white") : "";
+
   const k = g.kajian_harga;
   const kajian = k ? band(eb("Langkah pertama") + h2(esc(k.tajuk)) + `<p class="g-p">${esc(k.pengenalan)}</p>` +
     `<div class="g-cards">${k.perkara.map(([a, b]) => `<div class="g-card"><h3>${esc(a)}</h3><p>${esc(b)}</p></div>`).join("")}</div>` +
@@ -501,7 +527,7 @@ ${g.pembeli ? `<div class="nota" style="margin-top:8px"><div><h2>Untuk pembeli</
     `<div class="faq" style="max-width:900px">${g.faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</div>` +
     (g.sumber && g.sumber.length ? `<div style="font-size:13px;color:var(--ink)"><strong>Sumber maklumat kawasan</strong><ul style="margin:6px 0 0;padding-left:18px;line-height:1.8">${g.sumber.map(([n, u]) => `<li><a href="${esc(u)}" rel="nofollow noopener" target="_blank">${esc(n)}</a></li>`).join("")}</ul></div>` : "")) : "";
 
-  const body = hero + matlamat + kajian + kompetitif + kerja + cta + proses + listings + harga + tentang + faq;
+  const body = hero + matlamat + jenisH + kajian + kompetitif + kerja + cta + proses + listings + harga + tentang + faq;
 
   const jsonld = { "@context": "https://schema.org", "@graph": [
     { "@type": "WebPage", name: g.h1 || `Rumah untuk dijual di ${g.kawasan}`, url: SITE + href, description: g.ringkasan, dateModified: g.dikemaskini, inLanguage: "ms-MY",
@@ -677,10 +703,18 @@ async function main() {
   for (const [k, n] of AREAS) areas.set(areaPath(k, n), { kawasan: k, negeri: n });
   for (const l of all) if (l.kawasan) { const key = areaPath(l.kawasan, l.negeri); if (!areas.has(key)) areas.set(key, { kawasan: l.kawasan, negeri: l.negeri || "Selangor" }); }
   for (const g of GUIDES.values()) { const key = areaPath(g.kawasan, g.negeri); if (!areas.has(key)) areas.set(key, { kawasan: g.kawasan, negeri: g.negeri || "Selangor" }); }
+  const KW = await loadKawasan();
+  const kwBySlug = new Map(KW.map((r) => [slugify(r.nama), r]));
+  for (const r of KW) { const key = areaPath(r.nama, r.negeri); if (!areas.has(key)) areas.set(key, { kawasan: r.nama, negeri: r.negeri || "Selangor", tarikh: r.dicipta }); }
   for (const [href, a] of areas) {
     const inArea = (l) => slugify(l.kawasan) === slugify(a.kawasan) && slugify(l.negeri || "Selangor") === slugify(a.negeri);
     const d = dijual.filter(inArea), t = terjual.filter(inArea);
-    const guide = GUIDES.get(slugify(a.kawasan));
+    const kw = kwBySlug.get(slugify(a.kawasan));
+    let guide = GUIDES.get(slugify(a.kawasan)) || autoGuide(a.kawasan, a.negeri, a.tarikh || (kw && kw.dicipta));
+    if (kw && String(kw.nota_zack || "").trim()) {
+      guide = { ...guide, nota_zack: kw.nota_zack.trim() };
+      if (kw.dikemaskini && String(kw.dikemaskini).slice(0, 10) > String(guide.dikemaskini || "")) guide.dikemaskini = String(kw.dikemaskini).slice(0, 10);
+    }
     if (guide) {
       await write(path.join(href, "index.html"), guidePage(guide, href, d, t));
       urls.push({ loc: href, lastmod: guide.dikemaskini, pri: "0.8" });

@@ -210,11 +210,13 @@ button{cursor:pointer}
           <select id="e-jenis">
             <option>Teres 1 Tingkat</option><option>Teres 2 Tingkat</option><option>Teres 3 Tingkat</option>
             <option>Semi-D</option><option>Banglo</option><option>Townhouse</option>
-            <option>Pangsapuri</option><option>Kondominium</option><option>Tanah</option><option>Komersial</option>
+            <option>Flat</option><option>Pangsapuri</option><option>Apartment</option><option>Kondominium</option><option>Tanah</option><option>Kedai</option><option>Komersial</option><option>Kilang</option>
           </select></div>
         <div class="field"><label for="e-harga">Harga (RM)</label><input id="e-harga" type="number" min="0" step="1000" inputmode="numeric"></div>
         <div class="field full"><label for="e-taman">Taman / projek</label><input id="e-taman" type="text"></div>
-        <div class="field"><label for="e-kawasan">Kawasan</label><input id="e-kawasan" type="text" placeholder="cth. Sungai Buloh"></div>
+        <div class="field"><label for="e-kawasan-pilih">Kawasan</label>
+          <select id="e-kawasan-pilih"></select>
+          <input id="e-kawasan" type="text" placeholder="Nama kawasan baru, cth. Bandar Seri Coalfields" hidden autocomplete="off"></div>
         <div class="field"><label for="e-negeri">Negeri</label>
           <select id="e-negeri">
             <option>Selangor</option><option>Kuala Lumpur</option><option>Putrajaya</option><option>Negeri Sembilan</option>
@@ -226,6 +228,9 @@ button{cursor:pointer}
         <div class="field"><label for="e-bilik">Bilik</label><input id="e-bilik" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label for="e-bilikair">Bilik air</label><input id="e-bilikair" type="number" min="0" inputmode="numeric"></div>
         <div class="field"><label for="e-kps">Keluasan (kps)</label><input id="e-kps" type="number" min="0" inputmode="numeric"></div>
+        <div class="field full kw-nota"><label for="e-kawasan-nota">Nota Zack untuk <span id="kw-nama">kawasan ini</span> <span style="font-weight:400">(pandangan peribadi anda · dipaparkan di halaman panduan kawasan)</span></label>
+          <textarea id="e-kawasan-nota" rows="3" placeholder="cth. Berdasarkan pengalaman saya, rumah di kawasan ini boleh terjual kurang 3 bulan pada harga yang tepat…"></textarea>
+          <small id="kw-info" style="color:var(--ink-muted)"></small></div>
         <div class="field full"><label for="e-penerangan">Penerangan</label><textarea id="e-penerangan" rows="4" placeholder="Ciri utama, keadaan rumah, kemudahan berdekatan…"></textarea></div>
       </div>
 
@@ -286,7 +291,7 @@ button{cursor:pointer}
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   var $ = function (id) { return document.getElementById(id); };
-  var state = { ejen: {}, ejenOk: true, listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
+  var state = { kw: {}, kwOk: true, ejen: {}, ejenOk: true, listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -364,6 +369,9 @@ button{cursor:pointer}
     var r = await db.from('listings').select('*').order('urutan', { ascending: true }).order('id', { ascending: false });
     if (r.error) { alertBox('Gagal memuatkan listing: ' + r.error.message); return; }
     state.listings = r.data || [];
+    var k = await db.from('kawasan').select('*');
+    state.kwOk = !k.error; state.kw = {};
+    (k.data || []).forEach(function (x) { state.kw[x.slug] = x; });
     var e = await db.from('listing_ejen_lain').select('*');
     state.ejenOk = !e.error; state.ejen = {};
     (e.data || []).forEach(function (x) { state.ejen[x.listing_id] = x; });
@@ -538,6 +546,7 @@ button{cursor:pointer}
       $('e-ejen').checked = !!state.ejen[l.id];
       $('e-ejen-nama').value = ej.nama_ejen || ''; $('e-ejen-tel').value = ej.telefon_ejen || '';
       $('e-ejen-url').value = ej.pautan || ''; $('e-ejen-nota').value = ej.nota || '';
+      setKawasan(l.kawasan || '');
     }
     renderEjen();
     $('sold-when').hidden = editStatus !== 'terjual';
@@ -550,6 +559,57 @@ button{cursor:pointer}
     $('tg-resend').hidden = !(l.telegram_dihantar_pada && l.status === 'dijual');
     renderPhotos(l);
   }
+  /* ---------- kawasan: dropdown + Nota Zack ---------- */
+  var KAWASAN_TETAP = [['Shah Alam','Selangor'],['Petaling Jaya','Selangor'],['Subang Jaya','Selangor'],['Klang','Selangor'],['Puchong','Selangor'],
+    ['Cheras','Kuala Lumpur'],['Kajang','Selangor'],['Bangi','Selangor'],['Sungai Buloh','Selangor'],['Kota Damansara','Selangor'],['Rawang','Selangor'],
+    ['Selayang','Selangor'],['Gombak','Selangor'],['Ampang','Selangor'],['Setia Alam','Selangor'],['Puncak Alam','Selangor'],['Seri Kembangan','Selangor'],
+    ['Semenyih','Selangor'],['Cyberjaya','Selangor'],['Putrajaya','Putrajaya'],['Salak Tinggi','Selangor']];
+  var BARU = '__baru__';
+  function kawasanList() {
+    var m = {};
+    KAWASAN_TETAP.forEach(function (x) { m[slugify(x[0])] = { nama: x[0], negeri: x[1] }; });
+    state.listings.forEach(function (l) { if (l.kawasan && !m[slugify(l.kawasan)]) m[slugify(l.kawasan)] = { nama: l.kawasan, negeri: l.negeri || 'Selangor' }; });
+    Object.keys(state.kw).forEach(function (k) { var r = state.kw[k]; m[k] = { nama: r.nama, negeri: r.negeri || 'Selangor' }; });
+    return Object.keys(m).map(function (k) { return m[k]; }).sort(function (a, b) { return a.nama.localeCompare(b.nama, 'ms'); });
+  }
+  function setKawasan(nama) {
+    var list = kawasanList(), sel = $('e-kawasan-pilih');
+    sel.innerHTML = '<option value="">— Pilih kawasan —</option>' + list.map(function (x) { return '<option value="' + esc(x.nama) + '">' + esc(x.nama) + '</option>'; }).join('') +
+      '<option value="' + BARU + '">＋ Tambah kawasan baru…</option>';
+    sel.value = nama || '';
+    $('e-kawasan').value = nama || ''; $('e-kawasan').hidden = true;
+    showKwNota();
+  }
+  function showKwNota() {
+    var nama = $('e-kawasan').value.trim(), r = state.kw[slugify(nama)];
+    $('kw-nama').textContent = nama || 'kawasan ini';
+    $('e-kawasan-nota').value = r ? (r.nota_zack || '') : '';
+    $('e-kawasan-nota').disabled = !nama;
+    var tetap = KAWASAN_TETAP.some(function (x) { return slugify(x[0]) === slugify(nama); });
+    $('kw-info').textContent = !state.kwOk ? '⚠️ Jalankan supabase/migrations/004_kawasan.sql di Supabase dahulu untuk simpan kawasan & nota.' :
+      !nama ? '' : (r || tetap) ? 'Nota ini dikongsi oleh semua listing di ' + nama + '.' :
+      'Kawasan baru: halaman panduan ' + nama + ' akan dijana automatik selepas anda simpan.';
+  }
+  $('e-kawasan-pilih').addEventListener('change', function (e) {
+    var v = e.target.value;
+    if (v === BARU) { $('e-kawasan').hidden = false; $('e-kawasan').value = ''; $('e-kawasan').focus(); showKwNota(); return; }
+    $('e-kawasan').hidden = true; $('e-kawasan').value = v;
+    var x = kawasanList().filter(function (k) { return k.nama === v; })[0];
+    if (x) $('e-negeri').value = x.negeri;
+    showKwNota();
+  });
+  $('e-kawasan').addEventListener('input', showKwNota);
+  async function saveKawasan(nama, negeri) {
+    nama = String(nama || '').trim(); if (!nama) return null;
+    if (!state.kwOk) return 'jadual kawasan belum wujud (jalankan migration 004)';
+    var slug = slugify(nama), r = state.kw[slug], nota = $('e-kawasan-nota').value.trim();
+    if (r && (r.nota_zack || '') === nota && (r.negeri || '') === negeri) return null;
+    var row = { slug: slug, nama: r ? r.nama : nama, negeri: negeri, nota_zack: nota, dikemaskini: new Date().toISOString() };
+    var q = await db.from('kawasan').upsert(row).select().single();
+    if (q.error) return q.error.message;
+    state.kw[slug] = q.data; return null;
+  }
+
   function telUrl(t) { var d = String(t || '').replace(/\D/g, ''); if (d.charAt(0) === '0') d = '6' + d; return d; }
   function renderEjen() {
     var on = $('e-ejen').checked;
@@ -611,10 +671,12 @@ button{cursor:pointer}
     if (r.error) { toast('Gagal simpan: ' + r.error.message, true); return; }
     Object.assign(l, r.data); editStatus = l.status;
     var ejenErr = await saveEjen(l);
+    var kwErr = await saveKawasan(l.kawasan, l.negeri);
+    if (kwErr) ejenErr = (ejenErr ? ejenErr + '; ' : '') + 'kawasan: ' + kwErr;
     render();
     var msg = status === 'draf' ? 'Disimpan sebagai draf. Tidak dipaparkan di laman.' :
       'Disimpan & dipaparkan di laman' + (status === 'terjual' ? ' sebagai TERJUAL' : '') + '.';
-    if (ejenErr) toast(msg + ' ⚠️ Tetapi maklumat ejen lain gagal disimpan: ' + ejenErr, true); else toast(msg);
+    if (ejenErr) toast(msg + ' ⚠️ Tetapi sebahagian maklumat gagal disimpan: ' + ejenErr, true); else toast(msg);
     requestRebuild();
     if (l.status === 'dijual' && l.hantar_telegram && !l.telegram_dihantar_pada) {
       await sendTelegram(l, false, msg);
