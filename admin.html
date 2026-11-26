@@ -592,7 +592,7 @@ button{cursor:pointer}
   function pct(a, b) { return b ? Math.round(a / b * 1000) / 10 : 0; }
   function dur(sec) { sec = Math.round(Number(sec) || 0); return sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's'; }
   function tile(v, label, sub) { return '<div class="perf-t"><b>' + v + '</b><span>' + label + '</span>' + (sub || '') + '</div>'; }
-  var SUMBER_NAMA = { google: 'Google', carian_lain: 'Bing/lain', telegram: 'Telegram', whatsapp: 'WhatsApp', facebook: 'Facebook/IG', tiktok: 'TikTok', ai: 'ChatGPT/AI', dalaman: 'Dalam laman', terus: 'Terus', lain: 'Lain-lain' };
+  var SUMBER_NAMA = { gbp: 'Google Business', google: 'Google', carian_lain: 'Bing/lain', telegram: 'Telegram', whatsapp: 'WhatsApp', facebook: 'Facebook/IG', tiktok: 'TikTok', ai: 'ChatGPT/AI', dalaman: 'Dalam laman', terus: 'Terus', lain: 'Lain-lain' };
   function kelengkapan(l) {
     var g = Array.isArray(l.gambar) ? l.gambar : [], tanpaKap = g.filter(function (x) { return !(x && x.kapsyen && String(x.kapsyen).trim()); }).length;
     var kw = state.kw[slugify(l.kawasan || '')];
