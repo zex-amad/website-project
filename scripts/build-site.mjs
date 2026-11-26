@@ -421,9 +421,28 @@ ${similar.length ? `<section class="section"><h2 style="font-size:26px;font-weig
     ? `<script>document.querySelectorAll('.thumbs button').forEach(function(b){b.addEventListener('click',function(){var m=document.getElementById('main-img'),c=document.getElementById('main-cap');m.src=b.getAttribute('data-src');m.alt=b.getAttribute('data-alt');c.textContent=b.getAttribute('data-cap');c.hidden=!b.getAttribute('data-cap');document.querySelectorAll('.thumbs button').forEach(function(x){x.setAttribute('aria-current',String(x===b));});});});</script>`
     : "";
 
+  // Analitik ringkas (tanpa cookie): ID pelawat rawak di localStorage, acara dihantar ke Supabase (analitik_acara).
+  const tracker = `<script>(function(){try{if(navigator.webdriver||localStorage.getItem('za_admin')==='1')return;}catch(e){}
+var L=${Number(l.id)},U=${JSON.stringify(SB_URL + "/rest/v1/analitik_acara")},K=${JSON.stringify(SB_KEY)},v,s,d,ua=navigator.userAgent,sent={};
+try{v=localStorage.getItem('za_v');if(!v){v=((window.crypto&&crypto.randomUUID)?crypto.randomUUID().replace(/-/g,''):(Math.random().toString(36).slice(2)+Date.now().toString(36))).slice(0,24);localStorage.setItem('za_v',v);}}catch(e){v='s'+Math.random().toString(36).slice(2,14);}
+try{s=sessionStorage.getItem('za_s'+L);}catch(e){}
+if(!s){var q=new URLSearchParams(location.search),u=(q.get('utm_source')||'').toLowerCase(),h='';try{h=document.referrer?new URL(document.referrer).hostname:'';}catch(e){}
+s=u?u.slice(0,20):!h?'terus':/google\\./.test(h)?'google':/bing\\.|duckduckgo|yahoo/.test(h)?'carian_lain':/t\\.me|telegram/.test(h)?'telegram':/whatsapp|wa\\.me/.test(h)?'whatsapp':/facebook|fb\\.|instagram|threads/.test(h)?'facebook':/tiktok/.test(h)?'tiktok':/chatgpt|openai|perplexity|claude|gemini|copilot/.test(h)?'ai':h===location.hostname?'dalaman':'lain';
+try{sessionStorage.setItem('za_s'+L,s);}catch(e){}}
+d=/iPad|Tablet/i.test(ua)||(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1)?'tablet':/Mobi|Android|iPhone/i.test(ua)?'telefon':'komputer';
+function send(j,n,once){if(once){if(sent[j])return;sent[j]=1;}try{fetch(U,{method:'POST',keepalive:true,headers:{apikey:K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({listing_id:L,jenis:j,pelawat:v,sumber:s,peranti:d,nilai:n==null?null:n})}).catch(function(){});}catch(e){}}
+send('lihat');
+document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a,button');if(!a)return;var hr=a.getAttribute('href')||'';
+if(/wa\\.me|whatsapp/i.test(hr))send('whatsapp',null,1);else if(/^tel:/.test(hr))send('telefon',null,1);else if(/#kalkulator/.test(hr))send('kalkulator',null,1);else if(a.closest('.thumbs'))send('gambar');},true);
+var t0=Date.now(),act=0,vis=Date.now();
+function sc(){var r=(scrollY+innerHeight)/Math.max(document.documentElement.scrollHeight,1);if(r>=.5)send('skrol50',null,1);if(r>=.9)send('skrol90',null,1);}
+addEventListener('scroll',sc,{passive:true});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='hidden'){act+=Date.now()-vis;var sec=Math.min(Math.round(act/1000),1800);if(sec>=2&&!sent.masa){send('masa',sec,1);}}else{vis=Date.now();}});
+})();</script>`;
+
   return page({
     title: sold ? `${title} – Terjual | Zack Ahmad, REN 36121` : `${l.jenis} Untuk Dijual, ${l.taman} ${l.kawasan}${harga ? " – RM " + harga : ""} | Zack Ahmad`,
-    desc, canonical: p, image: pics[0], jsonld, body, script,
+    desc, canonical: p, image: pics[0], jsonld, body, script: script + tracker,
   });
 }
 

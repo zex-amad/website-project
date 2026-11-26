@@ -73,7 +73,20 @@ button{cursor:pointer}
 .r-price{font:800 17px var(--head);min-width:110px}
 .pill{font-size:12px;font-weight:600;letter-spacing:.06em;padding:6px 10px;border-radius:999px}
 .p-dijual{background:#E3F1E8;color:#1F6B3A}
-.p-terjual{background:var(--brass);color:#fff}.p-cobroke{background:#EDE7F6;color:#4A2C82;margin-left:4px}
+.p-terjual{background:var(--brass);color:#fff}.perf{background:#F6F3EC;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.perf-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.perf-head h3{margin:0;font-family:Manrope,sans-serif;font-size:16px;font-weight:800}
+.perf-tabs{display:flex;gap:4px}.perf-tabs button{font:inherit;font-size:12px;padding:6px 12px;min-height:32px;border-radius:999px;border:1px solid #D8D2C4;background:#fff;color:#13203A;cursor:pointer}
+.perf-tabs button[aria-pressed="true"]{background:#13203A;color:#F6F3EC;border-color:#13203A}
+.perf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.perf-t{background:#fff;border:1px solid #E4DED0;border-radius:12px;padding:10px 12px}.perf-t b{display:block;font-family:Manrope,sans-serif;font-weight:800;font-size:22px;color:#13203A}
+.perf-t span{font-size:12px;color:#3B4A66}.perf-t small{display:block;font-size:11px;margin-top:2px}.up{color:#1F6B3A}.down{color:#9B2C1F}
+.perf-bar{display:grid;grid-template-columns:92px 1fr 40px;align-items:center;gap:8px;font-size:12px;color:#3B4A66}
+.perf-bar i{height:8px;border-radius:4px;background:#E4DED0;overflow:hidden;display:block}.perf-bar i em{display:block;height:100%;background:#13203A}
+.perf-box{background:#fff;border-radius:12px;padding:10px 12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.perf-tip{background:#FFF7E6;border-left:3px solid #D9B26A;border-radius:8px;padding:8px 12px;font-size:13px}
+.r-views{font-size:12px;color:#3B4A66;white-space:nowrap}
+.p-cobroke{background:#EDE7F6;color:#4A2C82;margin-left:4px}
 .p-draf{background:#ECEEF2;color:var(--ink-muted)}
 .move{display:flex;flex-direction:column;gap:2px}
 .move button{width:32px;height:28px;border:1px solid var(--input);background:#fff;border-radius:8px;font-size:12px;color:var(--navy);padding:0}
@@ -179,6 +192,12 @@ button{cursor:pointer}
         <h2 style="font-size:20px">Edit listing</h2>
         <span class="sub" id="e-id" style="margin:0"></span>
       </div>
+
+      <section class="perf" id="perf" aria-label="Prestasi listing">
+        <div class="perf-head"><h3>Prestasi listing</h3>
+          <div class="perf-tabs" id="perf-tabs"><button type="button" data-h="7">7 hari</button><button type="button" data-h="30" aria-pressed="true">30 hari</button><button type="button" data-h="0">Semua</button></div></div>
+        <div id="perf-body"><p class="sub" style="margin:0">Memuatkan…</p></div>
+      </section>
 
       <div>
         <div class="field" style="gap:8px"><label>Status</label></div>
@@ -291,7 +310,7 @@ button{cursor:pointer}
   var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
   var $ = function (id) { return document.getElementById(id); };
-  var state = { kw: {}, kwOk: true, ejen: {}, ejenOk: true, listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
+  var state = { perf: {}, perfOk: true, perfHari: 30, kw: {}, kwOk: true, ejen: {}, ejenOk: true, listings: [], filter: 'semua', selId: null, dragId: null, q: '', jenis: '', kawasan: '', sort: 'urutan' };
 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function slugify(s) { return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
@@ -351,6 +370,7 @@ button{cursor:pointer}
   }
   function showLogin() { $('login').hidden = false; $('app').hidden = true; $('logout').hidden = true; $('rebuild').hidden = true; $('who').textContent = ''; }
   async function showApp(user) {
+    try { localStorage.setItem('za_admin', '1'); } catch (e) {} // jangan kira lawatan admin sendiri
     $('login').hidden = true; $('app').hidden = false; $('logout').hidden = false; $('rebuild').hidden = false; $('who').textContent = user.email;
     await load();
   }
@@ -369,6 +389,7 @@ button{cursor:pointer}
     var r = await db.from('listings').select('*').order('urutan', { ascending: true }).order('id', { ascending: false });
     if (r.error) { alertBox('Gagal memuatkan listing: ' + r.error.message); return; }
     state.listings = r.data || [];
+    await loadPerf();
     var k = await db.from('kawasan').select('*');
     state.kwOk = !k.error; state.kw = {};
     (k.data || []).forEach(function (x) { state.kw[x.slug] = x; });
@@ -421,7 +442,8 @@ button{cursor:pointer}
         (state.locked ? '' : '<span class="grip" aria-hidden="true" title="Seret untuk susun">⠿</span>') +
         '<div class="thumb">' + (g ? '<img src="' + esc(g.url) + '" alt="" loading="lazy">' : (l.gambar || []).length + ' gambar') + '</div>' +
         '<div class="r-main"><span class="r-title">' + esc(title || 'Listing baharu') + '</span>' +
-        '<span class="r-meta">' + esc(l.kawasan || '—') + ' · ' + (l.bilik == null ? '—' : l.bilik) + ' bilik · ' + (l.keluasan_kps == null ? '—' : l.keluasan_kps) + ' kps</span></div>' +
+        '<span class="r-meta">' + esc(l.kawasan || '—') + ' · ' + (l.bilik == null ? '—' : l.bilik) + ' bilik · ' + (l.keluasan_kps == null ? '—' : l.keluasan_kps) + ' kps' +
+          (state.perf[l.id] ? ' · <span class="r-views" title="Pelawat unik (' + perfLabel() + ')">👁 ' + state.perf[l.id].pelawat_unik + '</span>' : '') + '</span></div>' +
         '<span class="r-price">RM ' + rm(l.harga) + '</span>' +
         '<span class="pill p-' + l.status + '">' + l.status.toUpperCase() + '</span>' +
         (state.ejen[l.id] ? '<span class="pill p-cobroke" title="Daripada ejen lain: ' + esc(state.ejen[l.id].nama_ejen || '') + '">CO-BROKE</span>' : '') +
@@ -547,6 +569,7 @@ button{cursor:pointer}
       $('e-ejen-nama').value = ej.nama_ejen || ''; $('e-ejen-tel').value = ej.telefon_ejen || '';
       $('e-ejen-url').value = ej.pautan || ''; $('e-ejen-nota').value = ej.nota || '';
       setKawasan(l.kawasan || '');
+      renderPerf(l);
     }
     renderEjen();
     $('sold-when').hidden = editStatus !== 'terjual';
@@ -559,6 +582,79 @@ button{cursor:pointer}
     $('tg-resend').hidden = !(l.telegram_dihantar_pada && l.status === 'dijual');
     renderPhotos(l);
   }
+  /* ---------- prestasi listing (analitik) ---------- */
+  function perfLabel() { return state.perfHari ? state.perfHari + ' hari' : 'semua masa'; }
+  async function loadPerf() {
+    var r = await db.rpc('prestasi_listing', { hari: state.perfHari });
+    state.perfOk = !r.error; state.perf = {};
+    (r.data || []).forEach(function (x) { state.perf[x.listing_id] = x; });
+  }
+  function pct(a, b) { return b ? Math.round(a / b * 1000) / 10 : 0; }
+  function dur(sec) { sec = Math.round(Number(sec) || 0); return sec >= 60 ? Math.floor(sec / 60) + 'm ' + (sec % 60) + 's' : sec + 's'; }
+  function tile(v, label, sub) { return '<div class="perf-t"><b>' + v + '</b><span>' + label + '</span>' + (sub || '') + '</div>'; }
+  var SUMBER_NAMA = { google: 'Google', carian_lain: 'Bing/lain', telegram: 'Telegram', whatsapp: 'WhatsApp', facebook: 'Facebook/IG', tiktok: 'TikTok', ai: 'ChatGPT/AI', dalaman: 'Dalam laman', terus: 'Terus', lain: 'Lain-lain' };
+  function kelengkapan(l) {
+    var g = Array.isArray(l.gambar) ? l.gambar : [], tanpaKap = g.filter(function (x) { return !(x && x.kapsyen && String(x.kapsyen).trim()); }).length;
+    var kw = state.kw[slugify(l.kawasan || '')];
+    var cek = [
+      [g.length >= 6, g.length + ' gambar' + (g.length < 6 ? ' (sasaran 6+)' : '')],
+      [g.length && !tanpaKap, tanpaKap ? tanpaKap + ' gambar tanpa kapsyen' : 'Semua gambar berkapsyen'],
+      [!!(l.ringkasan && l.ringkasan.trim()), 'Ringkasan'],
+      [!!(l.penerangan && l.penerangan.trim().length > 150), 'Penerangan terperinci'],
+      [!!(l.nota_zack && l.nota_zack.trim()), 'Nota Zack (listing)'],
+      [!!(l.keluasan_kps), 'Keluasan'],
+      [!!(l.kemudahan && String(l.kemudahan).trim()), 'Kemudahan berdekatan'],
+      [!!(kw && kw.nota_zack && kw.nota_zack.trim()), 'Nota Zack kawasan'],
+    ];
+    var ok = cek.filter(function (c) { return c[0]; }).length;
+    return { skor: Math.round(ok / cek.length * 100), cek: cek };
+  }
+  function renderPerf(l) {
+    var box = $('perf-body');
+    if (!l || !l.id) { box.innerHTML = '<p class="sub" style="margin:0">Simpan listing dahulu untuk mula mengumpul data.</p>'; return; }
+    if (!state.perfOk) { box.innerHTML = '<p class="sub" style="margin:0;color:#A3261B">⚠️ Jalankan <code>supabase/migrations/005_analitik.sql</code> di Supabase untuk mula mengumpul data pelawat.</p>'; return; }
+    var p = state.perf[l.id] || { pelawat_unik: 0, pelawat_unik_lepas: 0, paparan: 0, whatsapp: 0, telefon: 0, kalkulator: 0, gambar: 0, skrol50: 0, skrol90: 0, purata_saat: null, sumber: {}, peranti: {} };
+    var u = Number(p.pelawat_unik) || 0, prev = Number(p.pelawat_unik_lepas) || 0, tind = Number(p.whatsapp) + Number(p.telefon);
+    var kadar = pct(tind, u);
+    // purata kadar tindakan listing lain (yang ada sekurang-kurangnya 20 pelawat)
+    var lain = Object.keys(state.perf).map(function (k) { return state.perf[k]; }).filter(function (x) { return String(x.listing_id) !== String(l.id) && Number(x.pelawat_unik) >= 20; });
+    var avg = lain.length ? pct(lain.reduce(function (a, x) { return a + Number(x.whatsapp) + Number(x.telefon); }, 0), lain.reduce(function (a, x) { return a + Number(x.pelawat_unik); }, 0)) : null;
+    var trend = state.perfHari && prev ? Math.round((u - prev) / prev * 100) : null;
+    var trendTxt = trend == null ? '' : '<small class="' + (trend >= 0 ? 'up' : 'down') + '">' + (trend >= 0 ? '▲ ' : '▼ ') + Math.abs(trend) + '% vs ' + state.perfHari + ' hari lepas</small>';
+    var kadarTxt = avg == null ? '' : '<small class="' + (kadar >= avg ? 'up' : 'down') + '">Purata listing lain: ' + avg + '%</small>';
+    var src = p.sumber || {}, keys = Object.keys(src).sort(function (a, b) { return src[b] - src[a]; });
+    var tot = keys.reduce(function (a, k) { return a + Number(src[k]); }, 0);
+    var bars = keys.slice(0, 5).map(function (k) { var v = pct(src[k], tot); return '<div class="perf-bar"><span>' + esc(SUMBER_NAMA[k] || k) + '</span><i><em style="width:' + v + '%"></em></i><span style="text-align:right">' + Math.round(v) + '%</span></div>'; }).join('');
+    var dev = p.peranti || {}, devTot = Object.keys(dev).reduce(function (a, k) { return a + Number(dev[k]); }, 0);
+    var mob = devTot ? Math.round(((Number(dev.telefon) || 0) + (Number(dev.tablet) || 0)) / devTot * 100) : 0;
+    var k = kelengkapan(l);
+    var tips = [];
+    if (u < 10) tips.push('Data masih sedikit. Kongsi pautan listing di Telegram, Facebook dan Google Business Profile untuk menarik pelawat.');
+    else {
+      if (avg != null && kadar < avg) tips.push('Kadar tindakan di bawah purata listing lain. Semak harga berbanding pasaran, dan tambah Nota Zack serta butiran yang pembeli selalu tanya.');
+      if (pct(p.skrol50, u) < 50) tips.push('Ramai pelawat keluar sebelum separuh halaman. Pastikan gambar utama paling menarik dan ringkasan jelas.');
+      if (!src.google || pct(src.google, tot) < 15) tips.push('Sedikit pelawat dari Google. Lengkapkan Ringkasan, Butiran tambahan dan kapsyen gambar supaya Google lebih faham listing ini.');
+      if (u > 0 && Number(p.gambar) / u < 1) tips.push('Pelawat jarang membuka gambar lain. Susun gambar terbaik di awal dan tambah kapsyen yang menarik.');
+    }
+    if (k.skor < 75) tips.push('Kelengkapan kandungan ' + k.skor + '%. Lengkapkan item bertanda ✗ di bawah.');
+    box.innerHTML =
+      '<div class="perf-grid">' +
+        tile(u, 'Pelawat unik', trendTxt) + tile(p.whatsapp, 'Klik WhatsApp') + tile(u ? kadar + '%' : '—', 'Kadar tindakan', kadarTxt) +
+        tile(p.telefon, 'Klik telefon') + tile(p.purata_saat == null ? '—' : dur(p.purata_saat), 'Purata masa') + tile(u ? Math.round(pct(p.skrol50, u)) + '%' : '—', 'Skrol separuh') +
+      '</div>' +
+      (bars ? '<div style="display:flex;flex-direction:column;gap:6px;margin-top:12px"><span style="font-size:12px;font-weight:600;color:#3B4A66">Sumber pelawat</span>' + bars + '</div>' : '') +
+      '<p style="margin:10px 0 0;font-size:12px;color:#3B4A66">' + (devTot ? '📱 ' + mob + '% telefon/tablet · ' : '') + '🖼 ' + (u ? (Math.round(Number(p.gambar) / u * 10) / 10) : 0) + ' gambar dibuka setiap pelawat · 🧮 ' + p.kalkulator + ' klik kalkulator · 👀 ' + p.paparan + ' paparan · ' + (u ? Math.round(pct(p.skrol90, u)) : 0) + '% baca hingga hujung</p>' +
+      '<div class="perf-box" style="margin-top:12px"><b>Kelengkapan kandungan: ' + k.skor + '%</b><span>' + k.cek.map(function (c) { return (c[0] ? '✓ ' : '✗ ') + esc(c[1]); }).join(' · ') + '</span></div>' +
+      tips.map(function (t) { return '<div class="perf-tip" style="margin-top:8px">💡 ' + esc(t) + '</div>'; }).join('');
+  }
+  $('perf-tabs').addEventListener('click', async function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    state.perfHari = Number(b.getAttribute('data-h'));
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    $('perf-body').innerHTML = '<p class="sub" style="margin:0">Memuatkan…</p>';
+    await loadPerf(); render(); renderPerf(sel());
+  });
+
   /* ---------- kawasan: dropdown + Nota Zack ---------- */
   var KAWASAN_TETAP = [['Shah Alam','Selangor'],['Petaling Jaya','Selangor'],['Subang Jaya','Selangor'],['Klang','Selangor'],['Puchong','Selangor'],
     ['Cheras','Kuala Lumpur'],['Kajang','Selangor'],['Bangi','Selangor'],['Sungai Buloh','Selangor'],['Kota Damansara','Selangor'],['Rawang','Selangor'],
