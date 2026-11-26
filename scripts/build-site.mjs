@@ -197,6 +197,9 @@ table{border-collapse:collapse;font-size:15px;width:100%;max-width:560px}th,td{t
 .nota{background:var(--navy);color:var(--cream);border-radius:20px;padding:24px;display:flex;gap:16px;align-items:flex-start}
 .nota img{width:56px;height:56px;border-radius:999px;object-fit:cover;object-position:center top;background:#fff;flex:none}
 .nota h2{font-size:18px;color:var(--accent);margin-bottom:6px}.nota p{color:var(--muted);line-height:1.7;white-space:pre-line}.nota span{display:block;margin-top:8px;font-size:13px;color:var(--muted-2)}
+.revs{display:flex;flex-direction:column;gap:10px}.revs-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.revs-h span{font-size:14px;color:var(--ink)}.revs-h b{font:800 18px var(--head);color:var(--navy)}.revs i{font-style:normal;color:var(--accent);letter-spacing:1px}
+.revs-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}.revs figure{margin:0;background:#fff;border:1px solid var(--cl);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.revs blockquote{margin:0;font-size:15px;line-height:1.6;white-space:pre-line}.revs figcaption{font-size:13px;color:var(--ink)}.revs-a{align-self:flex-start;color:var(--brass);font-weight:600;text-decoration:none;min-height:44px;display:inline-flex;align-items:center}
 .near{margin:0;padding-left:20px;line-height:1.9;color:var(--ink)}
 .faq{display:flex;flex-direction:column}.faq details{border-top:1px solid var(--cl);padding:14px 0}.faq details:last-child{border-bottom:1px solid var(--cl)}
 .faq summary{font-weight:600;cursor:pointer}.faq p{margin-top:8px;color:var(--ink)}
@@ -328,6 +331,10 @@ function listingPage(l, all) {
   const askText = sold
     ? `Salam Zack, saya nampak ${title} sudah terjual. Ada rumah serupa di ${l.kawasan}?`
     : `Salam Zack, saya berminat dengan ${title} (ID #${l.id}).`;
+  // 2 ulasan Google (bergilir ikut ID listing) + pautan ke profil Google Business
+  const revs = REVIEWS && Array.isArray(REVIEWS.reviews) ? REVIEWS.reviews.filter((r) => r && r.text && r.text.trim().length >= 40) : [];
+  const pick = revs.length ? [revs[Number(l.id) % revs.length], revs[(Number(l.id) + 1) % revs.length]].filter((r, i, arr) => arr.indexOf(r) === i) : [];
+  const reviewsBlock = REVIEWS && pick.length ? `<section class="revs" aria-label="Ulasan Google"><div class="revs-h"><h2 style="font-size:22px">Apa kata pelanggan Zack</h2><span><b>${REVIEWS.rating}</b> <i>★★★★★</i> · ${REVIEWS.count} ulasan Google</span></div><div class="revs-g">${pick.map((r) => `<figure><i>${"★".repeat(Number(r.stars) || 5)}</i><blockquote>“${esc(r.text.trim())}”</blockquote><figcaption>${esc(r.name)}${r.date ? " · " + esc(r.date) : ""} · Ulasan Google</figcaption></figure>`).join("")}</div><a class="revs-a" href="${REVIEWS.profile_url}" target="_blank" rel="noopener">Baca semua ulasan di Google ↗</a></section>` : "";
   const similar = all
     .filter((x) => x.id !== l.id && x.status === "dijual" && slugify(x.kawasan) === slugify(l.kawasan))
     .concat(all.filter((x) => x.id !== l.id && x.status === "dijual" && slugify(x.kawasan) !== slugify(l.kawasan) && x.negeri === l.negeri))
@@ -401,7 +408,7 @@ ${l.penerangan ? `<section style="display:flex;flex-direction:column;gap:10px"><
 <section style="display:flex;flex-direction:column;gap:10px"><h2 style="font-size:22px">Butiran</h2><table><tbody>${rows}</tbody></table></section>
 ${lines(l.kemudahan).length ? `<section style="display:flex;flex-direction:column;gap:10px"><h2 style="font-size:22px">Lokasi &amp; kemudahan berdekatan</h2><ul class="near">${lines(l.kemudahan).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>` : ""}
 ${!sold && l.harga ? `<section class="box pay"><div><h2>Anggaran bayaran bulanan</h2><b>± RM ${num(monthly(l.harga))} / bulan</b><span class="meta">Pinjaman 90% · 35 tahun · 4.2% setahun. Anggaran sahaja.</span></div><a href="/#kalkulator">Kira sendiri →</a></section>` : ""}
-<section class="faq"><h2 style="font-size:22px">Soalan lazim tentang rumah ini</h2>${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>
+${reviewsBlock}<section class="faq"><h2 style="font-size:22px">Soalan lazim tentang rumah ini</h2>${faq.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join("")}</section>
 <p><a href="${areaHref}">Lihat semua rumah di ${esc(l.kawasan)} →</a></p>
 </article>
 <aside class="agent" aria-label="Hubungi ejen">
