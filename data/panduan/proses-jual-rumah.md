@@ -40,7 +40,7 @@ Apabila dokumen dan penetapan harga selesai, rumah sedia untuk dipasarkan. Matla
 Apabila pembeli bersetuju dengan harga jualan, urusan jual rumah beralih ke peringkat dokumentasi rasmi pertama:
 
 1. **Surat Tawaran Membeli (*Letter of Offer to Purchase* / OTP)**: Dokumen ini mengandungi butiran jualan seperti nama penjual, pembeli, alamat hartanah, harga yang dipersetujui, tempoh mendapatkan pinjaman bank, dan tempoh menandatangani Perjanjian Jual Beli (SPA).
-2. **Earnest Deposit (Wang Tempahan)**: Lazimnya sebanyak 3.18% daripada harga jualan. Wang ini disimpan di dalam akaun amanah (*client's account*) agensi hartanah berdaftar atau akaun *stakeholder* peguam, bukan dimasukkan terus ke akaun peribadi penjual.
+2. **Earnest Deposit (Wang Tempahan)**: Lazimnya sebanyak 3.24% daripada harga jualan. Wang ini disimpan di dalam akaun amanah (*client's account*) agensi hartanah berdaftar atau akaun *stakeholder* peguam, bukan dimasukkan terus ke akaun peribadi penjual.
 
 OTP biasanya memberi tempoh 14 hingga 21 hari bekerja kepada pembeli untuk mendapatkan kelulusan pinjaman bank sebelum menandatangani SPA.
 
@@ -53,10 +53,10 @@ Walaupun pembeli melantik peguam untuk menguruskan pemindahan hak milik, pemilik
 
 ### Menandatangani SPA dan Baki Wang Pendahuluan
 Semasa menandatangani SPA:
-- Pembeli akan menjelaskan baki wang pendahuluan (lazimnya 6.82%) bagi melengkapkan 10% deposit keseluruhan.
+- Pembeli akan menjelaskan baki wang pendahuluan (lazimnya 6.76%) bagi melengkapkan 10% deposit keseluruhan.
 - Terma jualan, garis masa penyelesaian baki bayaran, dan syarat-syarat khusus hartanah dimuktamadkan secara sah di sisi undang-undang.
 
-Nota Zack: [[ZACK: apakah kesilapan paling kerap penjual buat sewaktu menandatangani SPA atau memilih peguam, dan bagaimana ia menjejaskan tempoh keseluruhan jualan?]]
+Nota Zack: Kebiasaannya pihak penjual tidak melantik peguam mewakilinya sendiri atas faktor kos lebih murah. Jadi jika apa-apa perkara yang berlaku, contohnya tempoh pindahmilik menjadi lebih panjang dari sepatutnya, ada “arrangement” tertentu berkenaan harga rumah dan pinjaman pembeli yang tidak diketahui penjual disebabkan perjanjian SPA yang berat sebelah oleh peguam dan lain-lain, pihak penjual berisiko untuk menanggung kerugian masa dan lebih teruk kerugian wang yan besar akibat tidak diwakili peguam sendiri. Adalah lebih baik bagi penjual untuk melantik peguam bagi pihaknya supaya proses lebih selamat dan lancar. Ini adalah berdasarkan pengalaman saya sendiri sebagai ejen hartanah yang telah menguruskan beratus kes pindahmilik hartanah.
 
 ## 5. Permohonan Kebenaran Pihak Berkuasa Negeri (Jika Berkaitan)
 
