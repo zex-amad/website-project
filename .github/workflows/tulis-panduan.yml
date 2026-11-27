@@ -1,0 +1,108 @@
+# Tulis draf artikel /panduan secara automatik dengan Gemini (peringkat percuma), kemudian buka Pull Request
+# untuk Zack semak, tambah "Nota Zack" dan Merge. Tiada apa-apa diterbitkan tanpa kelulusan Zack.
+#
+# Berjalan setiap hari 6:23 pagi (waktu Malaysia), TETAPI hanya menulis draf baharu bila tiada draf lain
+# yang masih menunggu semakan. Jadi kadar terbitan = kadar Zack menyemak (elak "scaled content abuse").
+#
+# Persediaan sekali sahaja (GitHub › Settings):
+#   1. Secrets and variables › Actions › New repository secret: GEMINI_API_KEY (dari aistudio.google.com)
+#   2. Actions › General › Workflow permissions: tandakan "Allow GitHub Actions to create and approve pull requests"
+#   3. (Pilihan) Secrets TELEGRAM_BOT_TOKEN dan TELEGRAM_ZACK_CHAT_ID untuk notifikasi Telegram peribadi
+#      (chat ID peribadi Zack, BUKAN channel awam).
+#   4. (Pilihan) Variables › GEMINI_MODEL untuk tukar model.
+name: Tulis draf panduan (AI)
+
+on:
+  schedule:
+    - cron: "23 22 * * *" # 06:23 MYT
+  workflow_dispatch:
+    inputs:
+      topik:
+        description: "Slug topik (kosongkan untuk topik seterusnya)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: tulis-panduan
+  cancel-in-progress: false
+
+jobs:
+  tulis:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TG_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TG_CHAT: ${{ secrets.TELEGRAM_ZACK_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Semak draf yang masih menunggu
+        id: gate
+        env:
+          TOPIK_IN: ${{ inputs.topik }}
+        run: |
+          gh label create draf-panduan --color D9B26A --description "Draf artikel AI menunggu semakan Zack" 2>/dev/null || true
+          open=$(gh pr list --label draf-panduan --state open --json number --jq length)
+          skip=$(gh pr list --label draf-panduan --state closed --limit 200 --json headRefName,mergedAt \
+            --jq '[.[] | select(.mergedAt == null) | .headRefName | sub("^draf/"; "")] | join(",")')
+          echo "open=$open" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          if [ "$open" != "0" ] && [ -z "$TOPIK_IN" ]; then
+            echo "Ada $open draf belum disemak. Tiada draf baharu hari ini."
+          fi
+
+      - name: Tulis draf
+        id: tulis
+        if: steps.gate.outputs.open == '0' || inputs.topik != ''
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
+          TOPIK: ${{ inputs.topik }}
+          SKIP_SLUGS: ${{ steps.gate.outputs.skip }}
+          PR_BODY: ${{ runner.temp }}/pr-body.md
+        run: node scripts/tulis-panduan.mjs
+
+      - name: Buka Pull Request
+        id: pr
+        if: steps.tulis.outputs.slug != ''
+        env:
+          SLUG: ${{ steps.tulis.outputs.slug }}
+          TAJUK: ${{ steps.tulis.outputs.tajuk }}
+          BRANCH: ${{ steps.tulis.outputs.branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add "data/panduan/$SLUG.md"
+          git commit -m "Draf panduan: $TAJUK"
+          git push -f origin "$BRANCH"
+          url=$(gh pr create --base main --head "$BRANCH" --title "Draf panduan: $TAJUK" \
+            --body-file "${{ runner.temp }}/pr-body.md" --label draf-panduan) \
+            || url="https://github.com/${{ github.repository }}/compare/main...$BRANCH?expand=1"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Maklumkan Zack di Telegram
+        if: steps.pr.outputs.url != ''
+        env:
+          URL: ${{ steps.pr.outputs.url }}
+          TAJUK: ${{ steps.tulis.outputs.tajuk }}
+        run: |
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || { echo "Telegram tidak ditetapkan, langkau."; exit 0; }
+          text=$(printf '📝 Draf artikel baharu untuk disemak:\n%s\n\nTambah Nota Zack, semak angka, kemudian Merge:\n%s' "$TAJUK" "$URL")
+          curl -sS -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$TG_CHAT" --data-urlencode "text=$text" > /dev/null
+
+      - name: Maklumkan jika gagal
+        if: failure()
+        run: |
+          [ -n "$TG_TOKEN" ] && [ -n "$TG_CHAT" ] || exit 0
+          curl -sS -X POST "https://api.telegram.org/bot$TG_TOKEN/sendMessage" \
+            --data-urlencode "chat_id=$TG_CHAT" \
+            --data-urlencode "text=⚠️ Penulis draf panduan gagal hari ini. Lihat: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" > /dev/null

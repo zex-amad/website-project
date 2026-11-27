@@ -579,6 +579,8 @@ try {
     const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
     if (!m) continue;
     const meta = Object.fromEntries(m[1].split("\n").filter((l) => l.includes(": ")).map((l) => [l.slice(0, l.indexOf(": ")).trim(), l.slice(l.indexOf(": ") + 2).trim()]));
+    // Draf AI yang belum disemak Zack (masih ada penanda [[ZACK: ...]]) tidak diterbitkan.
+    if (m[2].includes("[[ZACK:")) { console.warn(`Langkau draf belum disemak: ${f}`); continue; }
     ARTICLES.push({ ...meta, slug: meta.slug || f.replace(/\.md$/, ""), body: m[2].trim() });
   }
   ARTICLES.sort((a, b) => String(b.tarikh).localeCompare(String(a.tarikh)));
@@ -611,6 +613,8 @@ function mdToHtml(md) {
     if (lines.every((l) => /^[*-]\s/.test(l))) return `<ul>${lines.map((l) => `<li>${mdInline(l.replace(/^[*-]\s+/, ""))}</li>`).join("")}</ul>`;
     if (lines.every((l) => /^\d+\.\s/.test(l))) return `<ol>${lines.map((l) => `<li>${mdInline(l.replace(/^\d+\.\s+/, ""))}</li>`).join("")}</ol>`;
     const text = lines.join(" ");
+    const nota = text.match(/^Nota Zack:\s*/i);
+    if (nota) return `<div class="nota"><img src="/img/zack-ahmad.jpg" alt="Zack Ahmad" width="56" height="56" loading="lazy"><div><strong style="display:block;font:800 18px/1.3 var(--head);color:var(--accent);margin-bottom:6px">Nota Zack</strong><p>${mdInline(text.slice(nota[0].length))}</p><span>Zack Ahmad · Perunding Hartanah Berdaftar REN 36121</span></div></div>`;
     const box = text.match(/^(Tip|Penting):\s*/i);
     if (box) return `<p class="tip"><strong>${box[1][0].toUpperCase() + box[1].slice(1).toLowerCase()}:</strong> ${mdInline(text.slice(box[0].length))}</p>`;
     return `<p>${mdInline(text)}</p>`;
