@@ -1,0 +1,195 @@
+{
+  "_nota": [
+    "Senarai topik untuk penulis automatik (scripts/tulis-panduan.mjs). Satu topik = satu artikel, walaupun ada banyak kata kunci.",
+    "Kata kunci yang serupa digabung dalam satu artikel (bukan satu halaman bagi setiap kata kunci) supaya tiada halaman pendua dan tiada 'scaled content abuse'.",
+    "Penulis ambil topik 'jenis: panduan' yang belum ada fail data/panduan/{slug}.md, ikut 'keutamaan' (nombor kecil dahulu).",
+    "jenis 'harga_kawasan' hanya ditulis bila Zack ada sekurang-kurangnya 'min_terjual' rekod terjual di kawasan itu dalam Supabase.",
+    "jenis 'tulis_sendiri' tidak ditulis oleh AI: perlu cerita/pengalaman sebenar Zack.",
+    "Untuk tambah topik baru: salin satu blok, beri slug baru, pastikan maksud carian (niat) berbeza daripada topik sedia ada."
+  ],
+  "topik": [
+    {
+      "slug": "proses-jual-rumah",
+      "jenis": "panduan",
+      "keutamaan": 1,
+      "kategori": "Penjual",
+      "tajuk_cadangan": "Proses Jual Rumah Subsale di Malaysia: Langkah Demi Langkah Dari Iklan Hingga Serah Kunci",
+      "kata_kunci_utama": "proses jual rumah",
+      "kata_kunci": ["proses jual rumah", "proses menjual rumah", "proses penjualan rumah", "langkah jual rumah", "urusan jual rumah", "jual beli hartanah", "beli jual rumah"],
+      "niat": "Pemilik rumah yang mahu tahu turutan sebenar jualan rumah subsale: penilaian harga, surat tawaran, deposit/wang pendahuluan, SPA, consent negeri (jika pajakan), pelepasan gadaian, bayaran baki dan serahan kunci, serta anggaran tempoh setiap peringkat.",
+      "pautan_dalaman": ["/panduan/kos-menjual-rumah/", "/panduan/cara-jual-rumah-cepat/", "/terjual/"]
+    },
+    {
+      "slug": "semak-harga-pasaran-rumah",
+      "jenis": "panduan",
+      "keutamaan": 2,
+      "kategori": "Penjual",
+      "tajuk_cadangan": "Cara Semak Harga Pasaran Rumah Anda Sebelum Jual (Market Value vs Nilai Bank)",
+      "kata_kunci_utama": "semak harga pasaran rumah",
+      "kata_kunci": ["semak harga rumah", "semak harga pasaran rumah", "semak harga market rumah", "semak harga rumah online", "semak harga rumah terkini", "market value rumah", "harga market value rumah", "harga market rumah", "value rumah", "penilai harga rumah"],
+      "niat": "Pemilik yang mahu anggar harga jual realistik: beza harga iklan, harga transaksi dan nilai bank; sumber data transaksi rasmi (NAPIC/JPPH); bila perlu penilai berdaftar; kesilapan biasa meletak harga terlalu tinggi.",
+      "pautan_dalaman": ["/panduan/cara-jual-rumah-cepat/", "/terjual/"]
+    },
+    {
+      "slug": "jual-rumah-masih-ada-pinjaman-bank",
+      "jenis": "panduan",
+      "keutamaan": 3,
+      "kategori": "Penjual",
+      "tajuk_cadangan": "Boleh Ke Jual Rumah Yang Masih Ada Loan Bank? Ini Cara & Prosesnya",
+      "kata_kunci_utama": "jual rumah dengan bank",
+      "kata_kunci": ["jual rumah dengan bank", "jual rumah masih ada loan", "ingin jual rumah", "nak jual rumah"],
+      "niat": "Pemilik yang rumahnya masih ada pinjaman: penyata baki penebusan (redemption statement), notis penyelesaian awal, undertaking bank pembeli, pelepasan gadaian, apa berlaku jika harga jual kurang dari baki pinjaman.",
+      "pautan_dalaman": ["/panduan/kos-menjual-rumah/", "/panduan/proses-jual-rumah/"]
+    },
+    {
+      "slug": "kos-beli-rumah",
+      "jenis": "panduan",
+      "keutamaan": 4,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Kos Beli Rumah Subsale: Deposit, Duti Setem, Fi Guaman & Kos Tersembunyi",
+      "kata_kunci_utama": "kos untuk beli rumah",
+      "kata_kunci": ["kos untuk beli rumah", "kos beli rumah", "duti setem beli rumah", "kos guaman beli rumah"],
+      "niat": "Pembeli yang mahu tahu jumlah tunai perlu disediakan selain harga rumah: deposit 10%, duti setem MOT dan perjanjian pinjaman, fi guaman SPA dan pinjaman, penilaian, insurans; contoh pengiraan bagi rumah RM400,000 dan RM600,000.",
+      "pautan_dalaman": ["/panduan/lppsa-vs-pinjaman-bank/", "/rumah-dijual/"]
+    },
+    {
+      "slug": "langkah-beli-rumah",
+      "jenis": "panduan",
+      "keutamaan": 5,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Langkah Beli Rumah Subsale Untuk Pembeli Kali Pertama",
+      "kata_kunci_utama": "langkah beli rumah",
+      "kata_kunci": ["langkah beli rumah", "urusan beli rumah", "pembelian rumah", "sebelum beli rumah", "beli rumah malaysia"],
+      "niat": "Pembeli rumah pertama: semak kelayakan pinjaman, cari rumah, lawatan, tawaran, pinjaman, SPA, serahan kunci; senarai semak dokumen.",
+      "pautan_dalaman": ["/panduan/kos-beli-rumah/", "/panduan/lppsa-vs-pinjaman-bank/", "/panduan/penipuan-rumah-too-good-to-be-true/", "/rumah-dijual/"]
+    },
+    {
+      "slug": "hak-milik-rumah-kekal-pajakan-strata",
+      "jenis": "panduan",
+      "keutamaan": 6,
+      "kategori": "Umum",
+      "tajuk_cadangan": "Hak Milik Rumah: Beza Kekal (Freehold), Pajakan (Leasehold), Strata & Geran Induk",
+      "kata_kunci_utama": "hak milik rumah",
+      "kata_kunci": ["hak milik rumah", "jual rumah leasehold", "rumah leasehold", "rumah freehold", "geran strata"],
+      "niat": "Pemilik dan pembeli yang keliru jenis hak milik: kekal vs pajakan (dan baki tempoh pajakan), consent Pihak Berkuasa Negeri, hakmilik individu vs strata vs geran induk, kesan kepada harga, pinjaman dan tempoh jualan.",
+      "pautan_dalaman": ["/panduan/proses-jual-rumah/", "/panduan/langkah-beli-rumah/"]
+    },
+    {
+      "slug": "cara-pilih-ejen-hartanah-berdaftar",
+      "jenis": "panduan",
+      "keutamaan": 7,
+      "kategori": "Penjual",
+      "tajuk_cadangan": "Cara Semak & Pilih Ejen Hartanah Berdaftar (REN/REA) Sebelum Lantik",
+      "kata_kunci_utama": "ejen hartanah",
+      "kata_kunci": ["ejen hartanah", "ejen property", "agent rumah", "broker rumah", "ejen hartanah selangor", "agen jual rumah selangor", "agent hartanah selangor"],
+      "niat": "Pemilik yang mahu lantik ejen: beza REN/PEA/REA, cara semak pendaftaran di laman LPPEH, risiko 'broker' tidak berdaftar, soalan untuk ditanya kepada ejen, apa patut ada dalam surat lantikan.",
+      "pautan_dalaman": ["/panduan/jual-rumah-sendiri-tanpa-ejen/", "/panduan/kos-menjual-rumah/", "/terjual/"]
+    },
+    {
+      "slug": "jenis-rumah-di-malaysia",
+      "jenis": "panduan",
+      "keutamaan": 8,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Jenis Rumah & Hartanah di Malaysia: Teres, Corner Lot, Semi-D, Banglo, Pangsapuri & Kondominium",
+      "kata_kunci_utama": "jenis rumah",
+      "kata_kunci": ["jenis hartanah", "jenis rumah", "jenis kediaman", "rumah teres", "teres rumah", "perumahan teres", "rumah terrace", "rumah corner lot", "rumah teres corner lot", "rumah baglo", "rumah kediaman", "keluasan apartment"],
+      "niat": "Pembeli yang membanding jenis kediaman: ciri, julat keluasan biasa, kelebihan/kekurangan, yuran penyelenggaraan untuk strata, corner lot vs intermediate, apa patut dipilih ikut bajet dan keluarga.",
+      "pautan_dalaman": ["/rumah-dijual/", "/panduan/hak-milik-rumah-kekal-pajakan-strata/"]
+    },
+    {
+      "slug": "kelayakan-pinjaman-rumah-dsr",
+      "jenis": "panduan",
+      "keutamaan": 9,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Gaji Berapa Boleh Beli Rumah Berapa? Cara Kira DSR & Kelayakan Pinjaman Rumah",
+      "kata_kunci_utama": "loan rumah",
+      "kata_kunci": ["loan hartanah", "kelayakan pinjaman rumah", "dsr rumah", "gaji berapa boleh beli rumah"],
+      "niat": "Pembeli yang mahu tahu kelayakan pinjaman: maksud DSR, cara kira dengan contoh gaji, faktor CCRIS/CTOS, margin pembiayaan 90%, cara tingkatkan kelayakan.",
+      "pautan_dalaman": ["/panduan/lppsa-vs-pinjaman-bank/", "/panduan/kos-beli-rumah/"]
+    },
+    {
+      "slug": "beli-rumah-kedai",
+      "jenis": "panduan",
+      "keutamaan": 10,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Beli Rumah Kedai atau Lot Kedai: Perkara Wajib Tahu Sebelum Melabur",
+      "kata_kunci_utama": "beli rumah kedai",
+      "kata_kunci": ["beli rumah kedai", "beli kedai", "harga rumah kedai", "jual kedai"],
+      "niat": "Pelabur/peniaga yang mahu beli kedai: pinjaman komersial vs kediaman, cukai pintu & cukai tanah komersial, hasil sewa, lokasi, kategori tanah, kos guaman.",
+      "pautan_dalaman": ["/rumah-dijual/", "/panduan/kos-beli-rumah/"]
+    },
+    {
+      "slug": "rumah-subsale-vs-projek-baru",
+      "jenis": "panduan",
+      "keutamaan": 11,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "Rumah Subsale vs Projek Baru: Mana Lebih Berbaloi Untuk Anda?",
+      "kata_kunci_utama": "rumah subsale",
+      "kata_kunci": ["rumah subsale vs rumah baru", "perumahan baru", "rumah baru", "rumah subsale"],
+      "niat": "Pembeli yang membanding rumah subsale dan projek baru: harga, kos permulaan, tempoh siap, risiko projek terbengkalai, lokasi matang vs baru, potensi sewa.",
+      "pautan_dalaman": ["/rumah-dijual/", "/panduan/kos-beli-rumah/"]
+    },
+    {
+      "slug": "soalan-wajib-semasa-lawat-rumah",
+      "jenis": "panduan",
+      "keutamaan": 12,
+      "kategori": "Pembeli",
+      "tajuk_cadangan": "15 Soalan Wajib Tanya Semasa Lawat Rumah Sebelum Buat Tawaran",
+      "kata_kunci_utama": "soalan untuk beli rumah",
+      "kata_kunci": ["soalan untuk beli rumah", "soalan semasa tengok rumah"],
+      "niat": "Pembeli yang akan melawat rumah: soalan tentang hak milik, tunggakan, kebocoran/struktur, ubah suai tanpa kelulusan, yuran penyelenggaraan, sebab jual; senarai semak boleh dicetak.",
+      "pautan_dalaman": ["/panduan/langkah-beli-rumah/", "/panduan/penipuan-rumah-too-good-to-be-true/"]
+    },
+    {
+      "slug": "harga-rumah-shah-alam",
+      "jenis": "harga_kawasan",
+      "keutamaan": 20,
+      "kawasan": "Shah Alam",
+      "negeri": "Selangor",
+      "min_terjual": 3,
+      "kategori": "Pasaran",
+      "tajuk_cadangan": "Harga Rumah di Shah Alam: Rekod Jualan Sebenar & Panduan Harga Mengikut Jenis",
+      "kata_kunci_utama": "harga rumah shah alam",
+      "kata_kunci": ["harga rumah shah alam", "harga rumah di shah alam", "semi d shah alam", "rumah teres shah alam"],
+      "niat": "Pemilik/pembeli di Shah Alam yang mahu gambaran harga sebenar: rekod jualan Zack di Shah Alam (dari data), faktor yang mempengaruhi harga antara seksyen, cara anggar harga rumah sendiri.",
+      "pautan_dalaman": ["/rumah-dijual/selangor/shah-alam/", "/panduan/semak-harga-pasaran-rumah/"]
+    },
+    {
+      "slug": "harga-rumah-puncak-alam",
+      "jenis": "harga_kawasan",
+      "keutamaan": 21,
+      "kawasan": "Puncak Alam",
+      "negeri": "Selangor",
+      "min_terjual": 3,
+      "kategori": "Pasaran",
+      "tajuk_cadangan": "Harga Rumah di Puncak Alam: Rekod Jualan Sebenar & Panduan Harga",
+      "kata_kunci_utama": "harga rumah puncak alam",
+      "kata_kunci": ["harga rumah puncak alam", "harga rumah di puncak alam", "rumah teres puncak alam"],
+      "niat": "Pemilik/pembeli di Puncak Alam: rekod jualan Zack di Puncak Alam (dari data), beza harga antara projek, faktor harga, cara anggar harga.",
+      "pautan_dalaman": ["/rumah-dijual/selangor/puncak-alam/", "/panduan/semak-harga-pasaran-rumah/"]
+    },
+    {
+      "slug": "harga-rumah-sungai-buloh",
+      "jenis": "harga_kawasan",
+      "keutamaan": 22,
+      "kawasan": "Sungai Buloh",
+      "negeri": "Selangor",
+      "min_terjual": 3,
+      "kategori": "Pasaran",
+      "tajuk_cadangan": "Harga Rumah di Sungai Buloh: Rekod Jualan Sebenar & Panduan Harga",
+      "kata_kunci_utama": "harga rumah sungai buloh",
+      "kata_kunci": ["rumah sungai buloh", "rumah teres sungai buloh", "semi d sungai buloh"],
+      "niat": "Pemilik/pembeli di Sungai Buloh: rekod jualan Zack (dari data), beza harga antara taman, faktor harga.",
+      "pautan_dalaman": ["/rumah-dijual/selangor/sungai-buloh/", "/panduan/semak-harga-pasaran-rumah/"]
+    },
+    {
+      "slug": "pengalaman-jual-rumah",
+      "jenis": "tulis_sendiri",
+      "keutamaan": 99,
+      "kategori": "Penjual",
+      "kata_kunci_utama": "pengalaman jual rumah",
+      "kata_kunci": ["pengalaman jual rumah"],
+      "niat": "Kisah sebenar jualan (dengan izin pelanggan). Perlu ditulis daripada pengalaman Zack; AI tidak boleh mereka cerita."
+    }
+  ]
+}
